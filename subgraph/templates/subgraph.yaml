@@ -1,0 +1,25 @@
+specVersion: 0.0.2
+description: Planet Wars
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: OuterSpace
+    network: mainnet
+    source:
+      address: '{{contracts.OuterSpace.address}}'
+      abi: OuterSpaceContract
+      # startBlock: TODO
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Planet
+      abis:
+        - name: OuterSpaceContract
+          file: ./abis/OuterSpace.json
+      eventHandlers:
+        - event: NameChanged(indexed address,string)
+          handler: handleNameChanged
+      file: ./src/mapping.ts

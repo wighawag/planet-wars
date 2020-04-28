@@ -1,11 +1,18 @@
 const {assert, should, expect} = require("local-chai");
 const {ethers, getNamedAccounts, deployments} = require("@nomiclabs/buidler");
 
+async function start() {
+  const {players} = await getNamedAccounts();
+  await deployments.fixture();
+  return {
+    players,
+    outerSpaceAsPlayer0: await ethers.getContract("OuterSpace", players[0]),
+  };
+}
+
 describe("OuterSpace", function () {
-  it("should work", async function () {
-    await deployments.fixture();
-    const outerSpaceContract = await ethers.getContract("OuterSpace");
-    expect(true).to.be.a("boolean");
-    expect(outerSpaceContract.address).to.be.a("string");
+  it("user can acquire virgin planet", async function () {
+    const {players, outerSpaceAsPlayer0} = await start();
+    await outerSpaceAsPlayer0.stake(1, 1);
   });
 });

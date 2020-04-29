@@ -4,7 +4,7 @@ module.exports = async ({getNamedAccounts, deployments}) => {
 
   const contract = await deployIfDifferent(
     ["data"],
-    "StakingToken",
+    "StableToken",
     {from: deployer},
     "SimpleERC20TokenWithInitialBalance",
     "1000000000000000000000000000",

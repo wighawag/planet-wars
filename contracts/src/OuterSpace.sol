@@ -113,13 +113,44 @@ contract OuterSpace is StakingWithInterest {
         emit ApprovalForAll(sender, operator, approved);
     }
 
+    function getGeneisHash() external view returns (bytes32) {
+        return _genesis;
+    }
+
+    function getPlanet(uint256 location) external view returns (
+        uint256 maxStake,
+        uint256 efficiency,
+        uint256 attack,
+        uint256 defense,
+        address owner,
+        uint256 lastOwnershipTime,
+        uint256 numSpaceships,
+        uint256 lastUpdated,
+        uint256 productionRate,
+        uint256 currentStake
+    ) {
+        (Planet storage planet, PlanetStats memory stats) = _getPlanet(location);
+        maxStake = stats.maxStake;
+        efficiency = stats.efficiency;
+        attack = stats.attack;
+        owner = planet.owner;
+        lastOwnershipTime = planet.lastOwnershipTime;
+        numSpaceships = planet.numSpaceships; // TODO actualise here
+        lastUpdated = planet.lastUpdated;
+        productionRate = planet.productionRate;
+        currentStake = planet.stake;
+    }
+
     // /////////////////// DATA /////////////////////
     mapping(address => mapping(address => bool)) _operators;
     mapping(uint256 => Planet) _planets;
     mapping(uint256 => Squad) _squads;
     uint256 _lastSquadId;
+    bytes32 immutable _genesis;
 
-    constructor(address stakingToken) public StakingWithInterest(stakingToken) {}
+    constructor(address stakingToken, bytes32 genesis) public StakingWithInterest(stakingToken) {
+        _genesis = genesis;
+    }
 
     // ///////////////// INTERNALS ////////////////////
 
@@ -188,6 +219,19 @@ contract OuterSpace is StakingWithInterest {
     function _getPlanet(uint256 location) internal view returns (Planet storage, PlanetStats memory) {
         // depending on random algorithm might be cheaper to always execute random
         // TODO check existence from hash
+        int240 gridLocation = int240(location >> 16);
+        int120 gx = int120(gridLocation & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        int120 gy = int120(gridLocation >> 120);
+        int16 subLocation = int16(location & 0xFFFF);
+        int8 x = int8(subLocation & 0xFF);
+        int8 y = int8(subLocation >> 8);
+
+        bool hasPlanet = (uint256(keccak256(abi.encodePacked(gridLocation, _genesis, uint8(1)))) % 3) == 1;
+        require(hasPlanet, "no planet in this location");
+        int8 xy = int8(uint256(keccak256(abi.encodePacked(gridLocation, _genesis, uint8(2)))) % 9);
+        require(x == (xy % 3) - 1, "planet does not exists at this location");
+        require(y == (xy / 3) - 1, "planet does not exists at this location");
+
         //require(...)
         return (_planets[location], PlanetStats({maxStake: 100, efficiency: 90, attack: 50, defense: 50}));
 

@@ -1,9 +1,11 @@
 pragma solidity 0.6.5;
 
 import "./StakingWithInterest.sol";
-
+import "./Libraries/Random.sol";
 
 contract OuterSpace is StakingWithInterest {
+    using Random for bytes32;
+
     struct PlanetStats {
         uint256 maxStake;
         uint256 efficiency;
@@ -133,6 +135,7 @@ contract OuterSpace is StakingWithInterest {
         maxStake = stats.maxStake;
         efficiency = stats.efficiency;
         attack = stats.attack;
+        defense = stats.defense;
         owner = planet.owner;
         lastOwnershipTime = planet.lastOwnershipTime;
         numSpaceships = planet.numSpaceships; // TODO actualise here
@@ -218,7 +221,6 @@ contract OuterSpace is StakingWithInterest {
 
     function _getPlanet(uint256 location) internal view returns (Planet storage, PlanetStats memory) {
         // depending on random algorithm might be cheaper to always execute random
-        // TODO check existence from hash
         int240 gridLocation = int240(location >> 16);
         int120 gx = int120(gridLocation & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
         int120 gy = int120(gridLocation >> 120);
@@ -232,8 +234,12 @@ contract OuterSpace is StakingWithInterest {
         require(x == (xy % 3) - 1, "planet does not exists at this location");
         require(y == (xy / 3) - 1, "planet does not exists at this location");
 
-        //require(...)
-        return (_planets[location], PlanetStats({maxStake: 100, efficiency: 90, attack: 50, defense: 50}));
+        return (_planets[location], PlanetStats({
+            maxStake: _genesis.r_normalFrom(uint256(gridLocation), 3, 0x0001000200030004000500070009000A000A000C000F00140019001E00320064), //_genesis.r_u256_minMax(uint256(gridLocation), 3, 10**18, 1000**18),
+            efficiency: 4000 + _genesis.r_normal(uint256(gridLocation), 4) * 400,
+            attack: 4000 + _genesis.r_normal(uint256(gridLocation), 5) * 400,
+            defense: 4000 + _genesis.r_normal(uint256(gridLocation), 6) * 400
+        }));
 
         // Planet storage planet = _planets[location];
         // if (planet.exits) {

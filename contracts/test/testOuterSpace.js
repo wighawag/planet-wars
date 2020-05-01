@@ -127,10 +127,23 @@ async function sendInSecret(player, {from, quantity, to}) {
   };
 }
 
+function Random(seed) {
+  this.seed = seed;
+}
+Random.prototype.r_u8 = function () {}; // TODO
+
 describe("OuterSpace", function () {
   it("user can acquire virgin planet", async function () {
     const {players, outerSpace} = await start();
     const planet = outerSpace.findNextAvailablePlanet();
+    const ctPlanet = await players[0].OuterSpace.callStatic.getPlanet(planet.location);
+    const newObj = {};
+    Object.keys(ctPlanet).map(function (key, index) {
+      if (typeof key === "string") {
+        newObj[key] = ctPlanet[key].toString();
+      }
+    });
+    console.log({ctPlanet: newObj});
     await waitFor(players[0].OuterSpace.stake(planet.location, 1));
   });
 

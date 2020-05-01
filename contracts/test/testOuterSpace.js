@@ -5,12 +5,38 @@ const {utils, Wallet, BigNumber} = require("ethers");
 const {hexConcat, hexZeroPad} = require("@ethersproject/bytes");
 const {solidityKeccak256} = utils;
 
-function objMap(obj, func) {
+function Random(seed) {
+  this.seed = seed;
+}
+Random.prototype.r_u8 = function (r, i, mod) {
+  return BigNumber.from(solidityKeccak256(["uint256", "bytes32", "uint8"], [r, this.seed, i]))
+    .mod(mod)
+    .toNumber();
+};
+Random.prototype.r_normal = function (r, i) {
+  const n_m7_5_sd3 = "0x01223334444555555666666677777777888888889999999AAAAAABBBBCCCDDEF";
+  const index = this.r_u8(r, i, 64) + 2;
+  return BigNumber.from("0x" + n_m7_5_sd3[index]).toNumber();
+};
+Random.prototype.r_normalFrom = function (r, i, selection) {
+  const index = this.r_normal(r, i);
+  return BigNumber.from(
+    "0x" + selection[index * 4 + 2] + selection[index * 4 + 3] + selection[index * 4 + 4] + selection[index * 4 + 5]
+  ).toNumber();
+};
+
+function objMap(obj, func, options) {
   const newObj = {};
   Object.keys(obj).map(function (key, index) {
     const keyAsNumber = parseInt(key, 10);
     if (isNaN(keyAsNumber) || keyAsNumber >= obj.length) {
-      newObj[key] = func(obj[key], index);
+      let item = obj[key];
+      if (options && options.depth > 0 && typeof item === "object") {
+        item = objMap(item, func, {depth: options.depth - 1});
+      } else {
+        item = func(item, index);
+      }
+      newObj[key] = item;
     }
   });
   return newObj;
@@ -21,29 +47,33 @@ function toByteString(from, width) {
 }
 function OuterSpace(genesisHash) {
   this.genesisHash = genesisHash;
+  this.genesis = new Random(genesisHash);
 }
 OuterSpace.prototype.getPlanetStats = function ({x, y, dx, dy, index}) {
-  const gridY = toByteString(y, 120);
-  const gridX = toByteString(x, 120);
-  const gridLocation = hexConcat([gridY, gridX]);
+  const _genesis = this.genesis;
 
-  const hasPlanet = BigNumber.from(
-    solidityKeccak256(["int240", "bytes32", "uint8"], [gridLocation, this.genesisHash, 1])
-  )
-    .mod(3)
-    .eq(1);
+  const xStr = toByteString(x, 128);
+  const yStr = toByteString(y, 128);
+
+  const location = hexConcat([yStr, xStr]);
+
+  const hasPlanet = _genesis.r_u8(location, 1, 3) == 1;
   if (!hasPlanet) {
     return null;
   }
-  const xy = BigNumber.from(solidityKeccak256(["int240", "bytes32", "uint8"], [gridLocation, this.genesisHash, 2]))
-    .mod(9)
-    .toNumber();
 
-  const subX = (xy % 3) - 1;
-  const subY = Math.floor(xy / 3) - 1;
+  const subX = 1 - _genesis.r_u8(location, 2, 3);
+  const subY = 1 - _genesis.r_u8(location, 3, 3);
 
-  const xyPart = hexConcat([toByteString(subY, 8), toByteString(subX, 8)]);
-  const location = hexConcat([gridLocation, xyPart]);
+  const maxStake = _genesis.r_normalFrom(
+    location,
+    4,
+    "0x0001000200030004000500070009000A000A000C000F00140019001E00320064"
+  );
+  const efficiency = 4000 + _genesis.r_normal(location, 5) * 400;
+  const attack = 4000 + _genesis.r_normal(location, 6) * 400;
+  const defense = 4000 + _genesis.r_normal(location, 7) * 400;
+  const speed = 4000 + _genesis.r_normal(location, 8) * 400;
 
   return {
     genesisHash: this.genesisHash,
@@ -55,6 +85,11 @@ OuterSpace.prototype.getPlanetStats = function ({x, y, dx, dy, index}) {
     index,
     subX,
     subY,
+    maxStake,
+    efficiency,
+    attack,
+    defense,
+    speed,
   };
 };
 
@@ -138,18 +173,14 @@ async function sendInSecret(player, {from, quantity, to}) {
   };
 }
 
-function Random(seed) {
-  this.seed = seed;
-}
-Random.prototype.r_u8 = function () {}; // TODO
-
 describe("OuterSpace", function () {
   it("user can acquire virgin planet", async function () {
     const {players, outerSpace} = await start();
-    const planet = outerSpace.findNextAvailablePlanet();
-    const ctPlanet = await players[0].OuterSpace.callStatic.getPlanet(planet.location);
-    console.log({ctPlanet: objMap(ctPlanet, (o) => o.toString())});
-    await waitFor(players[0].OuterSpace.stake(planet.location, 1));
+    const planetStats = outerSpace.findNextAvailablePlanet();
+    const planet = await players[0].OuterSpace.callStatic.getPlanet(planetStats.location);
+    console.log(objMap(planet, (o) => o.toString(), {depth: 1}));
+    console.log({planetStats});
+    await waitFor(players[0].OuterSpace.stake(planetStats.location, 1));
   });
 
   it("user cannot acquire planet already onwed by another player", async function () {

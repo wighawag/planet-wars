@@ -1,4 +1,5 @@
 pragma solidity 0.6.5;
+pragma experimental ABIEncoderV2;
 
 import "./StakingWithInterest.sol";
 import "./Libraries/Random.sol";
@@ -7,10 +8,13 @@ contract OuterSpace is StakingWithInterest {
     using Random for bytes32;
 
     struct PlanetStats {
+        int8 subX;
+        int8 subY;
         uint256 maxStake;
         uint256 efficiency;
         uint256 attack;
         uint256 defense;
+        uint256 speed;
     }
     struct Planet {
         // PlanetStats stats; // TODO generate on demand from hash
@@ -119,29 +123,8 @@ contract OuterSpace is StakingWithInterest {
         return _genesis;
     }
 
-    function getPlanet(uint256 location) external view returns (
-        uint256 maxStake,
-        uint256 efficiency,
-        uint256 attack,
-        uint256 defense,
-        address owner,
-        uint256 lastOwnershipTime,
-        uint256 numSpaceships,
-        uint256 lastUpdated,
-        uint256 productionRate,
-        uint256 currentStake
-    ) {
-        (Planet storage planet, PlanetStats memory stats) = _getPlanet(location);
-        maxStake = stats.maxStake;
-        efficiency = stats.efficiency;
-        attack = stats.attack;
-        defense = stats.defense;
-        owner = planet.owner;
-        lastOwnershipTime = planet.lastOwnershipTime;
-        numSpaceships = planet.numSpaceships; // TODO actualise here
-        lastUpdated = planet.lastUpdated;
-        productionRate = planet.productionRate;
-        currentStake = planet.stake;
+    function getPlanet(uint256 location) external view returns (Planet memory state, PlanetStats memory stats) {
+        return _getPlanet(location);
     }
 
     // /////////////////// DATA /////////////////////
@@ -221,24 +204,20 @@ contract OuterSpace is StakingWithInterest {
 
     function _getPlanet(uint256 location) internal view returns (Planet storage, PlanetStats memory) {
         // depending on random algorithm might be cheaper to always execute random
-        int240 gridLocation = int240(location >> 16);
-        int120 gx = int120(gridLocation & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
-        int120 gy = int120(gridLocation >> 120);
-        int16 subLocation = int16(location & 0xFFFF);
-        int8 x = int8(subLocation & 0xFF);
-        int8 y = int8(subLocation >> 8);
+        // int120 gx = int120(gridLocation & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        // int120 gy = int120(gridLocation >> 128);
 
-        bool hasPlanet = (uint256(keccak256(abi.encodePacked(gridLocation, _genesis, uint8(1)))) % 3) == 1;
+        bool hasPlanet = _genesis.r_u8(location, 1, 3) == 1;
         require(hasPlanet, "no planet in this location");
-        int8 xy = int8(uint256(keccak256(abi.encodePacked(gridLocation, _genesis, uint8(2)))) % 9);
-        require(x == (xy % 3) - 1, "planet does not exists at this location");
-        require(y == (xy / 3) - 1, "planet does not exists at this location");
-
+        
         return (_planets[location], PlanetStats({
-            maxStake: _genesis.r_normalFrom(uint256(gridLocation), 3, 0x0001000200030004000500070009000A000A000C000F00140019001E00320064), //_genesis.r_u256_minMax(uint256(gridLocation), 3, 10**18, 1000**18),
-            efficiency: 4000 + _genesis.r_normal(uint256(gridLocation), 4) * 400,
-            attack: 4000 + _genesis.r_normal(uint256(gridLocation), 5) * 400,
-            defense: 4000 + _genesis.r_normal(uint256(gridLocation), 6) * 400
+            subX: int8(1 - _genesis.r_u8(location, 2, 3)),
+            subY: int8(1 - _genesis.r_u8(location, 3, 3)),
+            maxStake: _genesis.r_normalFrom(location, 4, 0x0001000200030004000500070009000A000A000C000F00140019001E00320064), //_genesis.r_u256_minMax(location, 3, 10**18, 1000**18),
+            efficiency: 4000 + _genesis.r_normal(location, 5) * 400,
+            attack: 4000 + _genesis.r_normal(location, 6) * 400,
+            defense: 4000 + _genesis.r_normal(location, 7) * 400,
+            speed: 4000 + _genesis.r_normal(location, 8) * 400
         }));
 
         // Planet storage planet = _planets[location];

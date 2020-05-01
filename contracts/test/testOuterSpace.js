@@ -5,6 +5,17 @@ const {utils, Wallet, BigNumber} = require("ethers");
 const {hexConcat, hexZeroPad} = require("@ethersproject/bytes");
 const {solidityKeccak256} = utils;
 
+function objMap(obj, func) {
+  const newObj = {};
+  Object.keys(obj).map(function (key, index) {
+    const keyAsNumber = parseInt(key, 10);
+    if (isNaN(keyAsNumber) || keyAsNumber >= obj.length) {
+      newObj[key] = func(obj[key], index);
+    }
+  });
+  return newObj;
+}
+
 function toByteString(from, width) {
   return hexZeroPad(BigNumber.from(from).toTwos(width).toHexString(), Math.floor(width / 8));
 }
@@ -137,13 +148,7 @@ describe("OuterSpace", function () {
     const {players, outerSpace} = await start();
     const planet = outerSpace.findNextAvailablePlanet();
     const ctPlanet = await players[0].OuterSpace.callStatic.getPlanet(planet.location);
-    const newObj = {};
-    Object.keys(ctPlanet).map(function (key, index) {
-      if (typeof key === "string") {
-        newObj[key] = ctPlanet[key].toString();
-      }
-    });
-    console.log({ctPlanet: newObj});
+    console.log({ctPlanet: objMap(ctPlanet, (o) => o.toString())});
     await waitFor(players[0].OuterSpace.stake(planet.location, 1));
   });
 

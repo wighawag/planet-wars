@@ -30,8 +30,8 @@ async function setupOuterSpace() {
 
 async function sendInSecret(player, {from, quantity, to}) {
   const secret = Wallet.createRandom().privateKey;
-  const toHash = solidityKeccak256(["bytes32", "uint256"], [secret, to]);
-  const receipt = await waitFor(player.OuterSpace.send(from, quantity, toHash));
+  const toHash = solidityKeccak256(["bytes32", "uint256"], [secret, to.location.id]);
+  const receipt = await waitFor(player.OuterSpace.send(from.location.id, quantity, toHash));
   let event;
   for (const eventEmitted of receipt.events) {
     if (eventEmitted.event === "FleetSent") {
@@ -39,9 +39,18 @@ async function sendInSecret(player, {from, quantity, to}) {
       break;
     }
   }
+  const distanceSquared =
+    Math.pow(to.location.globalX - from.location.globalX, 2) + Math.pow(to.location.globalY - from.location.globalY, 2);
+  const distance = Math.floor(Math.sqrt(distanceSquared));
+  const timeRequired = BigNumber.from(distance)
+    .mul(2 * 3600 * 10000)
+    .div(from.stats.speed)
+    .toNumber();
   return {
+    timeRequired,
+    distance,
     fleetId: event.args[1],
-    to,
+    to: to.location.id,
     secret,
   };
 }

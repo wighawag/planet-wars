@@ -50,10 +50,14 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
     4,
     "0x0001000200030004000500070009000A000A000C000F00140019001E00320064"
   );
-  const efficiency = 4000 + _genesis.r_normal(location, 5) * 400;
+  const production = _genesis.r_normalFrom(
+    location,
+    5,
+    "0x0708083409600a8c0bb80ce40e100e100e100e101068151819c81e7823282ee0"
+  );
   const attack = 4000 + _genesis.r_normal(location, 6) * 400;
   const defense = 4000 + _genesis.r_normal(location, 7) * 400;
-  const speed = 4000 + _genesis.r_normal(location, 8) * 400;
+  const speed = 5010 + _genesis.r_normal(location, 8) * 334;
 
   return {
     location: {
@@ -69,7 +73,7 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
       subX,
       subY,
       maxStake,
-      efficiency,
+      production,
       attack,
       defense,
       speed,

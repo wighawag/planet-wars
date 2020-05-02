@@ -1,5 +1,5 @@
 <script>
-
+// export let segment; // route
 </script>
 
 <style>

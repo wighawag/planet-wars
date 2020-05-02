@@ -9,8 +9,6 @@ import ApolloClient from "apollo-client";
 
 const WebSocket = require("websocket").client;
 
-console.log(process.env.THE_GRAPH_HTTP, process.env.THE_GRAPH_WS);
-
 const createApolloClient = () => {
   const httpLink = new HttpLink({
     uri: process.env.THE_GRAPH_HTTP,

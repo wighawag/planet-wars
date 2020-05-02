@@ -43,7 +43,7 @@ async function sendInSecret(player, {from, quantity, to}) {
     Math.pow(to.location.globalX - from.location.globalX, 2) + Math.pow(to.location.globalY - from.location.globalY, 2);
   const distance = Math.floor(Math.sqrt(distanceSquared));
   const timeRequired = BigNumber.from(distance)
-    .mul(2 * 3600 * 10000)
+    .mul(1 * 3600 * 10000)
     .div(from.stats.speed)
     .toNumber();
   return {
@@ -55,7 +55,41 @@ async function sendInSecret(player, {from, quantity, to}) {
   };
 }
 
+function convertPlanetCallData(o) {
+  if (typeof o === "number") {
+    return o;
+  }
+  if (typeof o === "string") {
+    return o;
+  }
+  if (o._isBigNumber) {
+    return o.toNumber();
+  }
+  return o.toString();
+}
+
+async function fetchPlanetState(contract, planet) {
+  const planetData = await contract.callStatic.getPlanet(planet.location.id);
+  const statsFromContract = objMap(planet.stats, convertPlanetCallData);
+  // check as validty assetion:
+  for (const key of Object.keys(statsFromContract)) {
+    const value = statsFromContract[key];
+    if (value !== planet.stats[key]) {
+      throw new Error(`${key}: ${planet.stats[key]} not equal to contract stats : ${value} `);
+    }
+  }
+  const state = objMap(planetData.state, convertPlanetCallData);
+  return {
+    ...planet,
+    state,
+    getNumSpaceships(time) {
+      return state.numSpaceships + Math.floor(((time - state.lastUpdated) * state.productionRate) / 3600);
+    },
+  };
+}
+
 module.exports = {
   setupOuterSpace,
   sendInSecret,
+  fetchPlanetState,
 };

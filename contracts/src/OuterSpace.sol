@@ -55,13 +55,22 @@ contract OuterSpace is StakingWithInterest {
         }
 
         uint256 currentStake = planet.stake;
+        
+        if (planet.lastUpdated == 0) {
+            planet.numSpaceships = 10; // TODO
+        } else {
+            uint256 currentnumSpaceships = _getCurrentNumSpaceships(
+                planet.numSpaceships,
+                planet.lastUpdated,
+                planet.productionRate
+            );
+            planet.numSpaceships = currentnumSpaceships;
+        }
         require(currentStake + stakeAmount <= stats.maxStake, "exceeds max stake");
         uint256 newStake = currentStake + stakeAmount;
         planet.stake = newStake;
-
-        planet.productionRate = stats.production * (newStake / stats.maxStake); // TODO compute on demand every time ?
-
-        planet.numSpaceships = 10; // TODO determine numbers
+        planet.productionRate = (stats.production * newStake) / stats.maxStake;
+        planet.lastUpdated = block.timestamp;
     }
 
     function withdraw(uint256 location) external {
@@ -160,7 +169,7 @@ contract OuterSpace is StakingWithInterest {
         (Planet storage planet, ) = _getPlanet(from);
         require(owner == planet.owner, "not owner of the planet");
 
-        uint256 currentnumSpaceships = _getCurrentnumSpaceships(
+        uint256 currentnumSpaceships = _getCurrentNumSpaceships(
             planet.numSpaceships,
             planet.lastUpdated,
             planet.productionRate
@@ -225,7 +234,7 @@ contract OuterSpace is StakingWithInterest {
     function _checkTime(uint256 distance, PlanetStats memory stats, Fleet memory fleet) internal view {
         uint256 speed = stats.speed;
 
-        uint256 reachTime = fleet.launchTime + distance * ((2 hours * 10000) / speed);
+        uint256 reachTime = fleet.launchTime + distance * ((1 hours * 10000) / speed);
         require(block.timestamp >= reachTime, "too early");
         require(block.timestamp < reachTime + 2 hours, "too late, your spaceships are lost in space");
     }
@@ -268,7 +277,7 @@ contract OuterSpace is StakingWithInterest {
         return msg.sender; // TODO metatx
     }
 
-    function _getCurrentnumSpaceships(
+    function _getCurrentNumSpaceships(
         uint256 numSpaceships,
         uint256 lastUpdated,
         uint256 productionRate
@@ -302,7 +311,7 @@ contract OuterSpace is StakingWithInterest {
         uint256 fleetId,
         uint256 numAttack
     ) internal {
-        uint256 numDefense = _getCurrentnumSpaceships(
+        uint256 numDefense = _getCurrentNumSpaceships(
             _planets[to].numSpaceships,
             _planets[to].lastUpdated,
             _planets[to].productionRate

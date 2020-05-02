@@ -15,6 +15,7 @@ contract OuterSpace is StakingWithInterest {
         uint256 attack;
         uint256 defense;
         uint256 speed;
+        uint256 natives;
     }
     struct Planet {
         // PlanetStats stats; // TODO generate on demand from hash
@@ -44,6 +45,7 @@ contract OuterSpace is StakingWithInterest {
 
     function stake(uint256 location, uint256 stakeAmount) external {
         address sender = _getSender();
+        require(stakeAmount >= 10**18, "minumum stake : 1");
         (Planet storage planet, PlanetStats memory stats) = _getPlanet(location);
         address owner = planet.owner;
 
@@ -57,7 +59,8 @@ contract OuterSpace is StakingWithInterest {
         uint256 currentStake = planet.stake;
         
         if (planet.lastUpdated == 0) {
-            planet.numSpaceships = 10; // TODO
+            (uint256 attackerLoss,) = _computeFight(3600, stats.natives, 10000, 10000); // attacker alwasy win as stats.native is restricted to 3500
+            planet.numSpaceships = 3600 - attackerLoss;
         } else {
             uint256 currentnumSpaceships = _getCurrentNumSpaceships(
                 planet.numSpaceships,
@@ -66,10 +69,10 @@ contract OuterSpace is StakingWithInterest {
             );
             planet.numSpaceships = currentnumSpaceships;
         }
-        require(currentStake + stakeAmount <= stats.maxStake, "exceeds max stake");
+        require(currentStake + stakeAmount <= (stats.maxStake * 10**18), "exceeds max stake");
         uint256 newStake = currentStake + stakeAmount;
         planet.stake = newStake;
-        planet.productionRate = (stats.production * newStake) / stats.maxStake;
+        planet.productionRate = (stats.production * newStake) / (stats.maxStake * 10**18);
         planet.lastUpdated = block.timestamp;
     }
 
@@ -259,7 +262,8 @@ contract OuterSpace is StakingWithInterest {
             production: _genesis.r_normalFrom(location, 5, 0x0708083409600a8c0bb80ce40e100e100e100e101068151819c81e7823282ee0), // per hour
             attack: 4000 + _genesis.r_normal(location, 6) * 400, // 1/10,000
             defense: 4000 + _genesis.r_normal(location, 7) * 400, // 1/10,000
-            speed: 5010 + _genesis.r_normal(location, 8) * 334 // 1/10,000
+            speed: 5010 + _genesis.r_normal(location, 8) * 334, // 1/10,000
+            natives: 2000 + _genesis.r_normal(location, 8) * 100
             // maxCapacity ?
         });
 

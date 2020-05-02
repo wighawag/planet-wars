@@ -22,7 +22,16 @@ async function setupOuterSpace() {
     playersAsContracts.push(playerObj);
   }
   const OuterSpaceDeployment = await deployments.get("OuterSpace");
+  let deltaTime = 0;
   return {
+    getTime() {
+      return Math.floor(Date.now() / 1000) + deltaTime;
+    },
+    async increaseTime(t) {
+      await increaseTime(t);
+      deltaTime += t;
+    },
+    outerSpaceContract: await ethers.getContract("OuterSpace"),
     outerSpace: new OuterSpace(OuterSpaceDeployment.linkedData),
     players: playersAsContracts,
   };
@@ -62,7 +71,7 @@ function convertPlanetCallData(o) {
   if (typeof o === "string") {
     return o;
   }
-  if (o._isBigNumber) {
+  if (o._isBigNumber && o.lte(2147483647) && o.gte(-2147483647)) {
     return o.toNumber();
   }
   return o.toString();
@@ -92,4 +101,5 @@ module.exports = {
   setupOuterSpace,
   sendInSecret,
   fetchPlanetState,
+  convertPlanetCallData,
 };

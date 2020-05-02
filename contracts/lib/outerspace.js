@@ -58,6 +58,7 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
   const attack = 4000 + _genesis.r_normal(location, 6) * 400;
   const defense = 4000 + _genesis.r_normal(location, 7) * 400;
   const speed = 5010 + _genesis.r_normal(location, 8) * 334;
+  const natives = 2000 + _genesis.r_normal(location, 8) * 100;
 
   return {
     location: {
@@ -77,6 +78,7 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
       attack,
       defense,
       speed,
+      natives,
     },
   };
 };

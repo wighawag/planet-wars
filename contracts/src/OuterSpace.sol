@@ -35,11 +35,10 @@ contract OuterSpace is StakingWithInterest {
         uint256 quantity; // we know how many but not where
     }
 
-    event PlanetAcquired(address acquirer, uint256 location, uint256 stake);
-    event FleetSent(address sender, uint256 fleet, uint256 from, uint256 quantity);
-    // event SpaceshipRevealed(address owner, uint256 from, uint256 destination, uint256 quantity);
-    event FleetArrived(address sender, uint256 fleet, uint256 location);
-    event Attack(address sender, uint256 fleet, uint256 fleetLoss, uint256 location, uint256 toLoss, bool won);
+    event PlanetAcquired(address indexed acquirer, uint256 indexed location, uint256 stake);
+    event FleetSent(address indexed sender, uint256 indexed from, uint256 fleet, uint256 quantity);
+    event FleetArrived(address indexed sender, uint256 indexed fleet, uint256 indexed location);
+    event Attack(address indexed sender, uint256 indexed fleet, uint256 indexed location, uint256 fleetLoss, uint256 toLoss, bool won);
 
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
@@ -199,7 +198,7 @@ contract OuterSpace is StakingWithInterest {
         // }
         // planet.lastFleets.push(fleetId);
 
-        emit FleetSent(owner, fleetId, from, quantity);
+        emit FleetSent(owner, from, fleetId, quantity);
     }
 
     function _resolveFleetFor(
@@ -325,12 +324,12 @@ contract OuterSpace is StakingWithInterest {
         
         if (attackerLoss == numAttack) {
             _planets[to].numSpaceships = numDefense - defenderLoss;
-            emit Attack(attacker, fleetId, attackerLoss, to, defenderLoss, false);
+            emit Attack(attacker, fleetId, to, attackerLoss, defenderLoss, false);
         } else if (defenderLoss == numDefense) {
             _planets[to].owner = attacker;
             _planets[to].lastOwnershipTime = block.timestamp;
             _planets[to].numSpaceships = numAttack - attackerLoss;
-            emit Attack(attacker, fleetId, attackerLoss, to, defenderLoss, true);
+            emit Attack(attacker, fleetId, to, attackerLoss, defenderLoss, true);
         }
         _planets[to].lastUpdated = block.timestamp;
     }

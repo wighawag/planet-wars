@@ -70,9 +70,9 @@
 			const oldZoom = camera.zoom;
 			// camera.zoom -= deltaY * 0.001;
 			if (dir > 0) {
-				camera.zoom *=2;
+				camera.zoom /=2;
 			} else {
-				camera.zoom /= 2;
+				camera.zoom *= 2;
 			}
 			camera.zoom = Math.min(Math.max(0.125 * devicePixelRatio, camera.zoom), 2 * devicePixelRatio);
 
@@ -111,7 +111,7 @@
 				y: visible.height / 2 - camera.y,
 			}
 			ctx.scale(camera.zoom, camera.zoom);
-			ctx.translate(offset.x, offset.y);
+			ctx.translate(Math.round(offset.x), Math.round(offset.y));
 
 			const gridSize = camera.zoom > devicePixelRatio ? 48 : Math.floor(Math.floor(48 / (camera.zoom / devicePixelRatio)) / 48) * 48;
 			const gridOffset = gridSize - gridSize / 8;
@@ -129,8 +129,8 @@
 				ctx.strokeStyle = "#4F487A";
 				ctx.lineWidth = lineWidth;
 				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
-				ctx.moveTo(x, gridStart.y - gridOffset);
-				ctx.lineTo(x, gridStart.y + visible.height + gridOffset);
+				ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
+				ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
 				ctx.stroke();
 			}
 
@@ -139,8 +139,8 @@
 				ctx.strokeStyle = "#4F487A";
 				ctx.lineWidth = lineWidth;
 				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
-				ctx.moveTo(gridStart.x - gridOffset, y);
-				ctx.lineTo(gridStart.x + visible.width + gridOffset, y);
+				ctx.moveTo(Math.round(gridStart.x - gridOffset), Math.round(y));
+				ctx.lineTo(Math.round(gridStart.x + visible.width + gridOffset), Math.round(y));
 				ctx.stroke();
 			}
 

@@ -1,4 +1,5 @@
 const webpack = require("webpack");
+const fs = require("fs");
 const path = require("path");
 const config = require("sapper/config/webpack.js");
 const pkg = require("./package.json");
@@ -10,6 +11,9 @@ const dev = mode === "development";
 let envPath = ".env";
 if (mode) {
   envPath = `./.env.${mode}`;
+}
+if (!fs.existsSync(envPath)) {
+  throw new Error(`${envPath} does not exists`);
 }
 
 const alias = { svelte: path.resolve("node_modules", "svelte") };

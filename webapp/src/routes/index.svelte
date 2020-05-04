@@ -8,8 +8,13 @@
   export let data; // this is named data so it matchesthe data given by preload (names.load)
   names.boot(data); // this boot the store with the data from server and make it listen for updates
   //// ---------- SERVER SIDE RENDERRING ----------- ///
+
+  import Map from "../app/Map"
 </script>
 
+<Map/>
+
+<!-- 
 {#if !$names.status}
   <div>Name not loaded</div>
 {:else if $names.status === 'error'}
@@ -20,4 +25,4 @@
   {#each $names.data as name, index}
     <li>{name}</li>
   {/each}
-{/if}
+{/if} -->

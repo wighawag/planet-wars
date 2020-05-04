@@ -1,5 +1,10 @@
 <!--   -->
 
+## Requirements
+- node/npm
+- yarn
+- docker/docker-compose
+
 ## SETUP
 
 ```

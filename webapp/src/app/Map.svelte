@@ -3,12 +3,33 @@
     
 	let drawOnChange = true;
 
+	let horizPattern;
+	let vertPattern
 	let canvas;
 	let devicePixelRatio;
 	let windowDevicePxelRatio;
 	onMount(() => {
+		let pctx;
+		horizPattern = document.createElement('canvas');
+		horizPattern.width = 48;
+		horizPattern.height = 1;
+		pctx = horizPattern.getContext("2d");
+		pctx.fillStyle = "#4F487A"
+		pctx.fillRect(0,0,2,1);
+		pctx.fillRect(6,0,36,1);
+		pctx.fillRect(46,0,2,1);
+		vertPattern = document.createElement('canvas');
+		vertPattern.width = 1;
+		vertPattern.height = 48;
+		pctx = vertPattern.getContext("2d");
+		pctx.fillStyle = "#4F487A"
+		pctx.fillRect(0,0,1,2);
+		pctx.fillRect(0,6,1,36);
+		pctx.fillRect(0,46,1,2);
+	
+
 		windowDevicePxelRatio = window.devicePixelRatio;
-		devicePixelRatio = 1; //window.devicePixelRatio;
+		devicePixelRatio = 0.5; //window.devicePixelRatio;
 		console.log({devicePixelRatio: window.devicePixelRatio});
 		let frame;
 		const ctx = canvas.getContext('2d');
@@ -16,6 +37,9 @@
 		ctx.webkitImageSmoothingEnabled = false;
 		ctx.msImageSmoothingEnabled = false;
 		ctx.imageSmoothingEnabled = false;
+
+		const hPattern = ctx.createPattern(horizPattern,"repeat-x");
+		const vPattern = ctx.createPattern(vertPattern,"repeat-y");
 
 		let camera = {x:0,y:0, zoom:devicePixelRatio};
 		let isPanning = false;
@@ -125,16 +149,36 @@
 			};
 
 			for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
-				ctx.beginPath();
-				ctx.strokeStyle = "#4F487A";
-				ctx.lineWidth = lineWidth;
-				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
-				ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
-				ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
-				ctx.stroke();
+				// ctx.fillStyle = vPattern;
+				// ctx.save();
+				// ctx.scale(1, gridSize / 48);
+				// ctx.fillRect(x-lineWidth/2, gridStart.y, lineWidth, visible.height + gridOffset);
+				// ctx.restore();
+
+				for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
+					ctx.drawImage(vertPattern, Math.round(x-lineWidth/2), Math.round(y), Math.round(lineWidth), Math.round(gridSize));
+				}
+				
+				// ctx.beginPath();
+				// ctx.strokeStyle = "#4F487A";
+				// ctx.lineWidth = lineWidth;
+				// ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
+				// ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
+				// ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
+				// ctx.stroke();
 			}
 
 			for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
+				// ctx.fillStyle = hPattern;
+				// ctx.save();
+				// ctx.scale(gridSize / 48, 1);
+				// ctx.fillRect(gridStart.x, y-lineWidth/2, visible.width + gridOffset, lineWidth);
+				// ctx.restore();
+				
+				for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
+					ctx.drawImage(horizPattern, Math.round(x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth));
+				}
+				
 				ctx.beginPath();
 				ctx.strokeStyle = "#4F487A";
 				ctx.lineWidth = lineWidth;

@@ -48,14 +48,14 @@
 			isPanning = true;
 			let eventX = e.clientX || e.touches[0].clientX;
 			let eventY = e.clientY || e.touches[0].clientY;
-			console.log({eventX, eventY});
+			// console.log({eventX, eventY});
 			lastClientPos = {x: eventX, y: eventY};
-			console.log(JSON.stringify({
-				world: screenToWorld(e.offsetX, e.offsetY),
-				screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
-				offfset: {x: e.offsetX, y: e.offsetY},
-				camera
-			}));
+			// console.log(JSON.stringify({
+			// 	world: screenToWorld(e.offsetX, e.offsetY),
+			// 	screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
+			// 	offfset: {x: e.offsetX, y: e.offsetY},
+			// 	camera
+			// }));
 		};
 		
 		const endPanning = (e) => {
@@ -68,10 +68,10 @@
 			let movementY = e.movementY / windowDevicePxelRatio;
 			let eventX = e.clientX || e.touches[0].clientX;
 			let eventY = e.clientY || e.touches[0].clientY;
-			console.log({eventX, eventY});
+			// console.log({eventX, eventY});
 			movementX = eventX - lastClientPos.x;
 			movementY = eventY - lastClientPos.y;
-			console.log(JSON.stringify({movementX, movementY, eMovementX: e.movementX, eMovementY: e.movementY}))
+			// console.log(JSON.stringify({movementX, movementY, eMovementX: e.movementX, eMovementY: e.movementY}))
 			lastClientPos = {x: eventX, y: eventY};
 			const scale = camera.zoom * devicePixelRatio;
 			camera.x -= (movementX * devicePixelRatio) / scale;
@@ -91,27 +91,73 @@
 				}
 			}
 		}
-		canvas.onmousedown = logEvent("onmousedown", startPanning);
-		// canvas.onpointerdown = logEvent("onpointerdown");
+		canvas.onmousedown = (e) => {startPanning(e);}
+		canvas.onmouseup = (e) => {endPanning(e);}
+		canvas.onmousemove = (e) => {pan(e);}
 
-		canvas.onmouseup = logEvent("onmouseup", endPanning);
-		// canvas.onpointerup = logEvent("onpointerup");
+		let isZooming = false;
+		let lastDist = 0;
 
-		canvas.onmousemove = logEvent("onmousemove", pan);
-		// canvas.onpointermove = logEvent("onpointermove");
+		function startZooming(e) {
+			isZooming = true;
+			lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+		}
 
-		// canvas.onpointerover = logEvent("onpointerover");
-		// canvas.onpointerenter = logEvent("onpointerenter");
-		// canvas.onpointercancel = logEvent("onpointercancel");
-		// canvas.onpointerout = logEvent("onpointerout");
-		// canvas.onpointerleave = logEvent("onpointerleave");
-		// canvas.ongotpointercapture = logEvent("ongotpointercapture");
-		// canvas.onlostpointercapture = logEvent("onlostpointercapture");
+		function endZooming(e) {
+			isZooming = false;
+		}
 
-		// canvas.ontouchcancel = logEvent("ontouchcancel");
-		canvas.ontouchstart = logEvent("ontouchstart", startPanning, {preventDefault: true});
-		canvas.ontouchmove = logEvent("ontouchmove", pan, {preventDefault: true});
-		canvas.ontouchend = logEvent("ontouchend", endPanning, {preventDefault: true});
+		function doZooming(e) {
+			const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+			
+			console.log(JSON.stringify({dist, lastDist}));
+			const diff = lastDist - dist;
+			if (Math.abs(diff) > 50) { // devicePixelRatio
+				const dir = Math.sign(diff);	
+				updateZoom((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2, dir);
+				lastDist = dist;
+				if (drawOnChange) {draw();}
+			}
+		}
+
+		function logTouchEvent(title, e) {
+			let touches = [];
+			for (let i = 0; i < e.touches.length; i++) {
+				touches.push({identifier: e.touches[i].identifier});
+			}
+			console.log(title, JSON.stringify(touches));
+		}
+		canvas.ontouchstart = (e) => {
+			e.preventDefault();
+			logTouchEvent('start', e);
+			if (!isZooming && e.touches.length === 2) {
+				startZooming(e);
+			} else if (!isZooming) {
+				startPanning(e);
+			}
+		}
+		canvas.ontouchend = (e) => {
+			e.preventDefault();
+			logTouchEvent('end', e);
+			if (isZooming) {
+				endZooming(e);
+			} else if (isPanning) {
+				endPanning(e);
+			}
+		}
+		canvas.ontouchmove = (e) => {
+			e.preventDefault();
+			logTouchEvent('move', e);
+			if (isZooming) {
+				if (e.touches.length != 2) {
+					endZooming(e);
+				} else {
+					doZooming(e);
+				}
+			} else if (isPanning) {
+				pan(e);
+			}
+		}
 
 		function screenToWorld(x,y) {
 			const scale = camera.zoom * devicePixelRatio;
@@ -140,16 +186,10 @@
 			};
 		}
 
-		canvas.onwheel = e => {
-			e.preventDefault();
-			const {offsetX, offsetY, deltaX, deltaY} = event;
+		function updateZoom(offsetX, offsetY, dir) {
 			const {x,y} = screenToWorld(offsetX, offsetY);
-			
-			const dir = Math.abs(deltaY) / deltaY;
 			const oldZoom = camera.zoom;
-			// camera.zoom -= deltaY * 0.001;
 
-			// console.log(JSON.stringify(camera));
 			if (dir > 0) {
 				// console.log('zoom out');
 				if (camera.zoom > 1) {
@@ -175,7 +215,6 @@
 					// camera.zoom *=2;
 				}
 			}
-			// console.log(JSON.stringify(camera));
 			camera.zoom = Math.min(Math.max(0.125, camera.zoom), 2);
 
 			const screenPos = worldToScreen(x,y);
@@ -187,6 +226,14 @@
 			camera.y -= delta.y;
 			
 			if (drawOnChange) {draw();}
+		}
+
+		canvas.onwheel = e => {
+			e.preventDefault();
+			const {offsetX, offsetY, deltaX, deltaY} = event;
+			const dir = Math.abs(deltaY) / deltaY;
+			
+			updateZoom(offsetX, offsetY, dir);
 		}
 
 		function resize(canvas) {

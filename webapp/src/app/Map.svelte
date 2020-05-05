@@ -40,12 +40,16 @@
 		const hPattern = ctx.createPattern(horizPattern,"repeat-x");
 		const vPattern = ctx.createPattern(vertPattern,"repeat-y");
 
-		const zoomIndexFound = lowZoomOrder.indexOf(devicePixelRatio);
-		let camera = {x:0,y:0, zoom: zoomIndexFound > -1 ? devicePixelRatio : 1, zoomIndex: zoomIndexFound};
+		let camera = {x:0,y:0, zoom: 1, zoomIndex: -1};
 		let isPanning = false;
 
 		canvas.onmousedown = (e) => {
 			isPanning = true;
+			// console.log(JSON.stringify({
+			// 	world: screenToWorld(e.offsetX, e.offsetY),
+			// 	screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
+			// 	offfset: {x: e.offsetX, y: e.offsetY}
+			// }));
 		};
 
 		canvas.onmouseup = (e) => {
@@ -54,15 +58,17 @@
 
 		canvas.onmousemove = (e) => {
 			if (!isPanning) return;
-			camera.x -= (e.movementX * devicePixelRatio) / camera.zoom / windowDevicePxelRatio;
-			camera.y -= (e.movementY * devicePixelRatio) / camera.zoom / windowDevicePxelRatio;
+			const scale = camera.zoom * devicePixelRatio;
+			camera.x -= (e.movementX * devicePixelRatio) / scale / windowDevicePxelRatio;
+			camera.y -= (e.movementY * devicePixelRatio) / scale / windowDevicePxelRatio;
 
 			if (drawOnChange) {draw();}
 		};
 
 		function screenToWorld(x,y) {
-			x = (x * devicePixelRatio - canvas.width/2) / camera.zoom + camera.x;
-			y = (y * devicePixelRatio - canvas.height/2) / camera.zoom + camera.y;
+			const scale = camera.zoom * devicePixelRatio;
+			x = (x * devicePixelRatio - canvas.width/2) / scale + camera.x;
+			y = (y * devicePixelRatio - canvas.height/2) / scale + camera.y;
 			return {
 				x,
 				y
@@ -70,9 +76,10 @@
 		}
 
 		function worldToScreen(x,y) {
+			const scale = camera.zoom * devicePixelRatio;
 			return {
-				x: ((x-camera.x) * camera.zoom + canvas.width/2) / devicePixelRatio,
-				y: ((y-camera.y) * camera.zoom + canvas.height/2) / devicePixelRatio,
+				x: ((x-camera.x) * scale + canvas.width/2) / devicePixelRatio,
+				y: ((y-camera.y) * scale + canvas.height/2) / devicePixelRatio,
 			};
 		}
 
@@ -94,9 +101,9 @@
 			const oldZoom = camera.zoom;
 			// camera.zoom -= deltaY * 0.001;
 
-			console.log(JSON.stringify(camera));
+			// console.log(JSON.stringify(camera));
 			if (dir > 0) {
-				console.log('zoom out');
+				// console.log('zoom out');
 				if (camera.zoom > 1) {
 					camera.zoom --;	
 				} else {
@@ -105,7 +112,7 @@
 					// camera.zoom /=2;
 				}
 			} else {
-				console.log('zoom in');
+				// console.log('zoom in');
 				if (camera.zoom >= 1) {
 					camera.zoom ++;	
 				} else {
@@ -120,13 +127,13 @@
 					// camera.zoom *=2;
 				}
 			}
-			console.log(JSON.stringify(camera));
-			camera.zoom = Math.min(Math.max(0.125 * devicePixelRatio, camera.zoom), 2 * devicePixelRatio);
+			// console.log(JSON.stringify(camera));
+			camera.zoom = Math.min(Math.max(0.125, camera.zoom), 2);
 
 			const screenPos = worldToScreen(x,y);
 			const delta = {
-				x: Math.round((offsetX - screenPos.x) * devicePixelRatio / camera.zoom),
-				y: Math.round((offsetY - screenPos.y) * devicePixelRatio / camera.zoom)
+				x: Math.round((offsetX - screenPos.x) / camera.zoom),
+				y: Math.round((offsetY - screenPos.y) / camera.zoom)
 			}
 			camera.x -= delta.x;
 			camera.y -= delta.y;
@@ -149,18 +156,20 @@
 			ctx.save();
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+			const scale = camera.zoom * devicePixelRatio;
+
 			const visible = {
-				width: (canvas.width / camera.zoom),
-				height: (canvas.height / camera.zoom)
+				width: (canvas.width / scale),
+				height: (canvas.height / scale)
 			};
 			const offset = { // floored so it remain pixel perfect
-				x: Math.floor(Math.floor( (visible.width / 2 - camera.x) * camera.zoom) / camera.zoom),
-				y: Math.floor(Math.floor( (visible.height / 2 - camera.y) * camera.zoom) / camera.zoom)
+				x: Math.floor(Math.floor( (visible.width / 2 - camera.x) * scale) / scale),
+				y: Math.floor(Math.floor( (visible.height / 2 - camera.y) * scale) / scale)
 			}
-			ctx.scale(camera.zoom, camera.zoom);
+			ctx.scale(scale, scale);
 			ctx.translate(offset.x, offset.y);
 
-			const gridSize = camera.zoom > devicePixelRatio ? 48 : Math.floor(Math.floor(48 / (camera.zoom / devicePixelRatio)) / 48) * 48;
+			const gridSize = camera.zoom > 1 ? 48 : Math.floor(Math.floor(48 / (camera.zoom)) / 48) * 48;
 			const gridOffset = gridSize - gridSize / 8;
 			const mainDash = gridSize - gridSize / 4;
 			const smallDash = gridSize / 6 / 2;
@@ -171,8 +180,8 @@
 				y: Math.floor((camera.y - visible.height/2) / gridSize) * gridSize
 			};
 
-			console.log(offset, camera);
-			console.log({lineWidth,gridStart, gridOffset, gridSize, canvasWidth: canvas.width, canvasHeight: canvas.height, zoom: camera.zoom});
+			// console.log(offset, camera);
+			// console.log({lineWidth,gridStart, gridOffset, gridSize, canvasWidth: canvas.width, canvasHeight: canvas.height, zoom: camera.zoom});
 
 			for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
 				// ctx.fillStyle = vPattern;
@@ -216,15 +225,16 @@
 				ctx.stroke();
 			}
 
-			// ctx.beginPath();
-			// ctx.strokeStyle = "#FDFBF3";
-			// ctx.lineWidth = 8;
-			// ctx.setLineDash([]);
-			// ctx.moveTo(-64, 0);
-			// ctx.lineTo(64, 0);
-			// ctx.moveTo(0, -64);
-			// ctx.lineTo(0, 64);
-			// ctx.stroke();
+			
+			ctx.beginPath();
+			ctx.strokeStyle = "#FDFBF3";
+			ctx.lineWidth = 8;// / scale;
+			ctx.setLineDash([]);
+			ctx.moveTo(-64, 0);
+			ctx.lineTo(64, 0);
+			ctx.moveTo(0, -64);
+			ctx.lineTo(0, 64);
+			ctx.stroke();
 		
 			ctx.restore();
 		}

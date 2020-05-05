@@ -42,9 +42,14 @@
 
 		let camera = {x:0,y:0, zoom: 1, zoomIndex: -1};
 		let isPanning = false;
+		let lastClientPos = {x:0,y:0};
 
-		canvas.onmousedown = (e) => {
+		const startPanning = (e) => {
 			isPanning = true;
+			let eventX = e.clientX || e.touches[0].clientX;
+			let eventY = e.clientY || e.touches[0].clientY;
+			console.log({eventX, eventY});
+			lastClientPos = {x: eventX, y: eventY};
 			console.log(JSON.stringify({
 				world: screenToWorld(e.offsetX, e.offsetY),
 				screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
@@ -52,19 +57,61 @@
 				camera
 			}));
 		};
-
-		canvas.onmouseup = (e) => {
+		
+		const endPanning = (e) => {
 			isPanning = false;
 		};
 
-		canvas.onmousemove = (e) => {
+		const pan = (e) => {
 			if (!isPanning) return;
+			let movementX = e.movementX / windowDevicePxelRatio;
+			let movementY = e.movementY / windowDevicePxelRatio;
+			let eventX = e.clientX || e.touches[0].clientX;
+			let eventY = e.clientY || e.touches[0].clientY;
+			console.log({eventX, eventY});
+			movementX = eventX - lastClientPos.x;
+			movementY = eventY - lastClientPos.y;
+			console.log(JSON.stringify({movementX, movementY, eMovementX: e.movementX, eMovementY: e.movementY}))
+			lastClientPos = {x: eventX, y: eventY};
 			const scale = camera.zoom * devicePixelRatio;
-			camera.x -= (e.movementX * devicePixelRatio) / scale / windowDevicePxelRatio;
-			camera.y -= (e.movementY * devicePixelRatio) / scale / windowDevicePxelRatio;
+			camera.x -= (movementX * devicePixelRatio) / scale;
+			camera.y -= (movementY * devicePixelRatio) / scale;
 
 			if (drawOnChange) {draw();}
 		};
+
+		function logEvent(name, func, options) {
+			return function(e) {
+				if (options && options.preventDefault) {
+					e.preventDefault();
+				}
+				console.log(name);
+				if (func) {
+					return func(e);
+				}
+			}
+		}
+		canvas.onmousedown = logEvent("onmousedown", startPanning);
+		// canvas.onpointerdown = logEvent("onpointerdown");
+
+		canvas.onmouseup = logEvent("onmouseup", endPanning);
+		// canvas.onpointerup = logEvent("onpointerup");
+
+		canvas.onmousemove = logEvent("onmousemove", pan);
+		// canvas.onpointermove = logEvent("onpointermove");
+
+		// canvas.onpointerover = logEvent("onpointerover");
+		// canvas.onpointerenter = logEvent("onpointerenter");
+		// canvas.onpointercancel = logEvent("onpointercancel");
+		// canvas.onpointerout = logEvent("onpointerout");
+		// canvas.onpointerleave = logEvent("onpointerleave");
+		// canvas.ongotpointercapture = logEvent("ongotpointercapture");
+		// canvas.onlostpointercapture = logEvent("onlostpointercapture");
+
+		// canvas.ontouchcancel = logEvent("ontouchcancel");
+		canvas.ontouchstart = logEvent("ontouchstart", startPanning, {preventDefault: true});
+		canvas.ontouchmove = logEvent("ontouchmove", pan, {preventDefault: true});
+		canvas.ontouchend = logEvent("ontouchend", endPanning, {preventDefault: true});
 
 		function screenToWorld(x,y) {
 			const scale = camera.zoom * devicePixelRatio;

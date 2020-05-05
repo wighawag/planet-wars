@@ -45,11 +45,12 @@
 
 		canvas.onmousedown = (e) => {
 			isPanning = true;
-			// console.log(JSON.stringify({
-			// 	world: screenToWorld(e.offsetX, e.offsetY),
-			// 	screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
-			// 	offfset: {x: e.offsetX, y: e.offsetY}
-			// }));
+			console.log(JSON.stringify({
+				world: screenToWorld(e.offsetX, e.offsetY),
+				screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
+				offfset: {x: e.offsetX, y: e.offsetY},
+				camera
+			}));
 		};
 
 		canvas.onmouseup = (e) => {
@@ -169,7 +170,15 @@
 			ctx.scale(scale, scale);
 			ctx.translate(offset.x, offset.y);
 
-			const gridSize = camera.zoom > 1 ? 48 : Math.floor(Math.floor(48 / (camera.zoom)) / 48) * 48;
+
+			let gridLevel = 1;
+			if (camera.zoom < 1) {
+				gridLevel = Math.floor(Math.floor(48 / (camera.zoom)) / 48);
+			}
+			
+			const gridSize = Math.max(1, Math.floor(gridLevel / 2) * 2) * 48;;
+			// const gridSize = 48 * Math.pow(2, gridLevel-1);
+			// const nextLevelGridSize = 48 * Math.pow(2, gridLevel);
 			const gridOffset = gridSize - gridSize / 8;
 			const mainDash = gridSize - gridSize / 4;
 			const smallDash = gridSize / 6 / 2;
@@ -179,6 +188,8 @@
 				x: Math.floor((camera.x - visible.width /2) / gridSize) * gridSize,
 				y: Math.floor((camera.y - visible.height/2) / gridSize) * gridSize
 			};
+
+			// console.log(JSON.stringify({gridLevel, gridSize, nextLevelGridSize}));
 
 			// console.log(offset, camera);
 			// console.log({lineWidth,gridStart, gridOffset, gridSize, canvasWidth: canvas.width, canvasHeight: canvas.height, zoom: camera.zoom});
@@ -196,8 +207,11 @@
 				// }
 				
 				ctx.beginPath();
-				ctx.strokeStyle = "#4F487A";
+				ctx.strokeStyle = "#4F487A"; //gridLevel % 2 == 1 ? "#4F487A" : "#0F083A";
 				ctx.lineWidth = lineWidth;
+				// if ((x / nextLevelGridSize) == Math.floor(x / nextLevelGridSize)) {
+				// 	ctx.lineWidth = lineWidth * 2;
+				// } 
 				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
 				ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
 				ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
@@ -217,8 +231,11 @@
 				// }
 				
 				ctx.beginPath();
-				ctx.strokeStyle = "#4F487A";
+				ctx.strokeStyle = "#4F487A"; //gridLevel % 2 == 1 ? "#4F487A" : "#0F083A";
 				ctx.lineWidth = lineWidth;
+				// if ((y / nextLevelGridSize) == Math.floor(y / nextLevelGridSize)) {
+				// 	ctx.lineWidth = lineWidth * 2;
+				// } 
 				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
 				ctx.moveTo(Math.round(gridStart.x - gridOffset), Math.round(y));
 				ctx.lineTo(Math.round(gridStart.x + visible.width + gridOffset), Math.round(y));

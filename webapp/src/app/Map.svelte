@@ -3,14 +3,13 @@
     
 	let drawOnChange = true;
 
-	let horizPattern;
-	let vertPattern
+	const lowZoomOrder = [0.5, 1/3, 0.25, 1/6, 0.125, 0.0625]; // 48 
 	let canvas;
 	let devicePixelRatio;
 	let windowDevicePxelRatio;
 	onMount(() => {
 		let pctx;
-		horizPattern = document.createElement('canvas');
+		const horizPattern = document.createElement('canvas');
 		horizPattern.width = 48;
 		horizPattern.height = 1;
 		pctx = horizPattern.getContext("2d");
@@ -18,7 +17,7 @@
 		pctx.fillRect(0,0,2,1);
 		pctx.fillRect(6,0,36,1);
 		pctx.fillRect(46,0,2,1);
-		vertPattern = document.createElement('canvas');
+		const vertPattern = document.createElement('canvas');
 		vertPattern.width = 1;
 		vertPattern.height = 48;
 		pctx = vertPattern.getContext("2d");
@@ -41,7 +40,8 @@
 		const hPattern = ctx.createPattern(horizPattern,"repeat-x");
 		const vPattern = ctx.createPattern(vertPattern,"repeat-y");
 
-		let camera = {x:0,y:0, zoom:devicePixelRatio};
+		const zoomIndexFound = lowZoomOrder.indexOf(devicePixelRatio);
+		let camera = {x:0,y:0, zoom: zoomIndexFound > -1 ? devicePixelRatio : 1, zoomIndex: zoomIndexFound};
 		let isPanning = false;
 
 		canvas.onmousedown = (e) => {
@@ -93,17 +93,40 @@
 			const dir = Math.abs(deltaY) / deltaY;
 			const oldZoom = camera.zoom;
 			// camera.zoom -= deltaY * 0.001;
+
+			console.log(JSON.stringify(camera));
 			if (dir > 0) {
-				camera.zoom /=2;
+				console.log('zoom out');
+				if (camera.zoom > 1) {
+					camera.zoom --;	
+				} else {
+					camera.zoomIndex = Math.min(camera.zoomIndex + 1, lowZoomOrder.length - 1);
+					camera.zoom = lowZoomOrder[camera.zoomIndex];
+					// camera.zoom /=2;
+				}
 			} else {
-				camera.zoom *= 2;
+				console.log('zoom in');
+				if (camera.zoom >= 1) {
+					camera.zoom ++;	
+				} else {
+					camera.zoomIndex = camera.zoomIndex - 1;
+					if (camera.zoomIndex < 0) {
+						camera.zoomIndex = -1;
+						camera.zoom = 1;
+					} else {
+						camera.zoom = lowZoomOrder[camera.zoomIndex];
+					}
+					
+					// camera.zoom *=2;
+				}
 			}
+			console.log(JSON.stringify(camera));
 			camera.zoom = Math.min(Math.max(0.125 * devicePixelRatio, camera.zoom), 2 * devicePixelRatio);
 
 			const screenPos = worldToScreen(x,y);
 			const delta = {
-				x: (offsetX - screenPos.x) * devicePixelRatio / camera.zoom,
-				y: (offsetY - screenPos.y) * devicePixelRatio / camera.zoom,
+				x: Math.round((offsetX - screenPos.x) * devicePixelRatio / camera.zoom),
+				y: Math.round((offsetY - screenPos.y) * devicePixelRatio / camera.zoom)
 			}
 			camera.x -= delta.x;
 			camera.y -= delta.y;
@@ -130,12 +153,12 @@
 				width: (canvas.width / camera.zoom),
 				height: (canvas.height / camera.zoom)
 			};
-			const offset = {
-				x: visible.width / 2 - camera.x,
-				y: visible.height / 2 - camera.y,
+			const offset = { // floored so it remain pixel perfect
+				x: Math.floor(Math.floor( (visible.width / 2 - camera.x) * camera.zoom) / camera.zoom),
+				y: Math.floor(Math.floor( (visible.height / 2 - camera.y) * camera.zoom) / camera.zoom)
 			}
 			ctx.scale(camera.zoom, camera.zoom);
-			ctx.translate(Math.round(offset.x), Math.round(offset.y));
+			ctx.translate(offset.x, offset.y);
 
 			const gridSize = camera.zoom > devicePixelRatio ? 48 : Math.floor(Math.floor(48 / (camera.zoom / devicePixelRatio)) / 48) * 48;
 			const gridOffset = gridSize - gridSize / 8;
@@ -148,6 +171,9 @@
 				y: Math.floor((camera.y - visible.height/2) / gridSize) * gridSize
 			};
 
+			console.log(offset, camera);
+			console.log({lineWidth,gridStart, gridOffset, gridSize, canvasWidth: canvas.width, canvasHeight: canvas.height, zoom: camera.zoom});
+
 			for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
 				// ctx.fillStyle = vPattern;
 				// ctx.save();
@@ -155,17 +181,18 @@
 				// ctx.fillRect(x-lineWidth/2, gridStart.y, lineWidth, visible.height + gridOffset);
 				// ctx.restore();
 
-				for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
-					ctx.drawImage(vertPattern, Math.round(x-lineWidth/2), Math.round(y), Math.round(lineWidth), Math.round(gridSize));
-				}
+				// // console.log('x', Math.round(x-lineWidth/2), Math.round(gridStart.y), Math.round(lineWidth), Math.round(gridSize))
+				// for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
+				// 	ctx.drawImage(vertPattern, Math.round(x-lineWidth/2), Math.round(y), Math.round(lineWidth), Math.round(gridSize));
+				// }
 				
-				// ctx.beginPath();
-				// ctx.strokeStyle = "#4F487A";
-				// ctx.lineWidth = lineWidth;
-				// ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
-				// ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
-				// ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
-				// ctx.stroke();
+				ctx.beginPath();
+				ctx.strokeStyle = "#4F487A";
+				ctx.lineWidth = lineWidth;
+				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
+				ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
+				ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
+				ctx.stroke();
 			}
 
 			for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
@@ -175,9 +202,10 @@
 				// ctx.fillRect(gridStart.x, y-lineWidth/2, visible.width + gridOffset, lineWidth);
 				// ctx.restore();
 				
-				for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
-					ctx.drawImage(horizPattern, Math.round(x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth));
-				}
+				// // console.log('y', Math.round(gridStart.x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth))
+				// for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
+				// 	ctx.drawImage(horizPattern, Math.round(x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth));
+				// }
 				
 				ctx.beginPath();
 				ctx.strokeStyle = "#4F487A";
@@ -188,15 +216,15 @@
 				ctx.stroke();
 			}
 
-			ctx.beginPath();
-			ctx.strokeStyle = "#FDFBF3";
-			ctx.lineWidth = 8;
-			ctx.setLineDash([]);
-			ctx.moveTo(-64, 0);
-			ctx.lineTo(64, 0);
-			ctx.moveTo(0, -64);
-			ctx.lineTo(0, 64);
-			ctx.stroke();
+			// ctx.beginPath();
+			// ctx.strokeStyle = "#FDFBF3";
+			// ctx.lineWidth = 8;
+			// ctx.setLineDash([]);
+			// ctx.moveTo(-64, 0);
+			// ctx.lineTo(64, 0);
+			// ctx.moveTo(0, -64);
+			// ctx.lineTo(0, 64);
+			// ctx.stroke();
 		
 			ctx.restore();
 		}

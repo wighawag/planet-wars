@@ -123,11 +123,16 @@
 
 		let isZooming = false;
 		let lastDist = 0;
+		let zoomPoint = {x:0,y:0};
 
 		function startZooming(e) {
 			isPanning = false; // zooming override panning
 			isZooming = true;
 			lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+			zoomPoint = {
+				x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+				y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+			};
 		}
 
 		function endZooming(e) {
@@ -141,7 +146,7 @@
 			const diff = lastDist - dist;
 			if (Math.abs(diff) > 50) { // devicePixelRatio
 				const dir = Math.sign(diff);	
-				updateZoom((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2, dir);
+				updateZoom(zoomPoint.x, zoomPoint.y, dir);
 				lastDist = dist;
 				if (drawOnChange) {draw();}
 			}

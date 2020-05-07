@@ -1,6 +1,22 @@
 <script>
     import { onMount } from 'svelte';
-    
+	import planetsFrame from '../assets/planets.json';
+	import planetsDataURL from '../assets/planets.png';
+	import {OuterSpace} from "../../../contracts/lib/outerspace";
+	
+	const outerspace = new OuterSpace("0x1111111111111111111111111111111111111111111111111111111111111111"); // TODO
+	const planetSpriteSheet = new Image();
+	planetSpriteSheet.src = planetsDataURL;
+	const planetTypesToFrame = [
+		"Baren.png",
+		"Desert.png",
+		"Forest.png",
+		"Ice.png",
+		"Lava.png",
+		"Ocean.png",
+		"Terran.png"
+	]
+	
 	let drawOnChange = true;
 
 	const lowZoomOrder = [0.5, 1/3, 0.25, 1/6, 0.125, 0.0625]; // 48 
@@ -334,6 +350,20 @@
 				ctx.moveTo(Math.round(gridStart.x - gridOffset), Math.round(y));
 				ctx.lineTo(Math.round(gridStart.x + visible.width + gridOffset), Math.round(y));
 				ctx.stroke();
+			}
+
+			const gridX = Math.floor(gridStart.x / 48 / 4);
+			const gridY = Math.floor(gridStart.y / 48 / 4);
+			const gridEndX = Math.floor((gridStart.x + visible.width + gridOffset) / 48 / 4);
+			const gridEndY = Math.floor((gridStart.y + visible.height + gridOffset) / 48 / 4);
+			for (let x = gridX; x <= gridEndX+1; x++) {
+				for (let y = gridY; y <= gridEndY+1; y++) {
+					const planet = outerspace.getPlanetStats({x,y});
+					if (planet) {
+						const lavaFrame = planetsFrame.frames[planetTypesToFrame[planet.type]].frame;
+						ctx.drawImage(planetSpriteSheet, lavaFrame.x, lavaFrame.y, lavaFrame.w, lavaFrame.h, (x+planet.location.subX) * 48 * 4 - 48/2, (y+planet.location.subY) * 48 * 4 - 48/2, 48, 48);
+					}
+				}	
 			}
 
 			

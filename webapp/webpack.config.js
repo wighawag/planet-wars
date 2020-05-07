@@ -43,6 +43,12 @@ module.exports = {
               hotReload: false // pending https://github.com/sveltejs/svelte/issues/2377
             }
           }
+        },
+        {
+          test: /\.(jpg|png)$/,
+          use: {
+            loader: "url-loader"
+          }
         }
       ]
     },
@@ -78,6 +84,12 @@ module.exports = {
               generate: "ssr",
               dev
             }
+          }
+        },
+        {
+          test: /\.(jpg|png)$/,
+          use: {
+            loader: "url-loader"
           }
         }
       ]

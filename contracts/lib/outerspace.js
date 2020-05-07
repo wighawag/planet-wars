@@ -28,8 +28,14 @@ function toByteString(from, width) {
 function OuterSpace(genesisHash) {
   this.genesisHash = genesisHash;
   this.genesis = new Random(genesisHash);
+  this.cache = {};
 }
-OuterSpace.prototype.getPlanet = function ({x, y}) {
+OuterSpace.prototype.getPlanetStats = function ({x, y}) {
+  const id = "" + x + "," + y;
+  const inCache = this.cache[id];
+  if (typeof inCache !== "undefined") {
+    return inCache;
+  }
   const _genesis = this.genesis;
 
   const xStr = toByteString(x, 128);
@@ -39,6 +45,7 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
 
   const hasPlanet = _genesis.r_u8(location, 1, 3) == 1;
   if (!hasPlanet) {
+    this.cache[id] = null;
     return null;
   }
 
@@ -60,7 +67,9 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
   const speed = 5010 + _genesis.r_normal(location, 8) * 334;
   const natives = 2000 + _genesis.r_normal(location, 8) * 100;
 
-  return {
+  const type = _genesis.r_u8(location, 255, 7);
+
+  const data = {
     location: {
       id: location,
       x,
@@ -70,6 +79,7 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
       globalX: x * 4 + subX,
       globalY: y * 4 + subY,
     },
+    type,
     stats: {
       subX,
       subY,
@@ -81,6 +91,8 @@ OuterSpace.prototype.getPlanet = function ({x, y}) {
       natives,
     },
   };
+  this.cache[id] = data;
+  return data;
 };
 
 // let path = [];
@@ -116,7 +128,7 @@ OuterSpace.prototype.findNextPlanet = function (pointer) {
   let planet;
   while (!planet) {
     pointer = nextInSpiral(pointer);
-    planet = this.getPlanet(pointer);
+    planet = this.getPlanetStats(pointer);
   }
   return {stats: planet.stats, location: planet.location, pointer};
 };

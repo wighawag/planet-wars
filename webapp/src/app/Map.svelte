@@ -61,6 +61,7 @@
 		let lastClientPos = {x:0,y:0};
 
 		const startPanning = (e) => {
+			console.log("startPanning");
 			isPanning = true;
 			let eventX = e.clientX || e.touches[0].clientX;
 			let eventY = e.clientY || e.touches[0].clientY;
@@ -75,13 +76,19 @@
 		};
 		
 		const endPanning = (e) => {
+			console.log("endPanning");
 			isPanning = false;
 		};
 
 		const pan = (e) => {
 			if (!isPanning) return;
-			let movementX = e.movementX / windowDevicePxelRatio;
-			let movementY = e.movementY / windowDevicePxelRatio;
+			
+			let movementX;
+			let movementY;
+			// if (e.movementX) {
+			// 	movementX = e.movementX / windowDevicePxelRatio;
+			// 	movementY = e.movementY / windowDevicePxelRatio;
+			// }
 			let eventX = e.clientX || e.touches[0].clientX;
 			let eventY = e.clientY || e.touches[0].clientY;
 			// console.log({eventX, eventY});
@@ -89,6 +96,9 @@
 			movementY = eventY - lastClientPos.y;
 			// console.log(JSON.stringify({movementX, movementY, eMovementX: e.movementX, eMovementY: e.movementY}))
 			lastClientPos = {x: eventX, y: eventY};
+			
+			console.log('panning', movementX, movementY);
+
 			const scale = camera.zoom * devicePixelRatio;
 			camera.x -= (movementX * devicePixelRatio) / scale;
 			camera.y -= (movementY * devicePixelRatio) / scale;
@@ -115,6 +125,7 @@
 		let lastDist = 0;
 
 		function startZooming(e) {
+			isPanning = false; // zooming override panning
 			isZooming = true;
 			lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
 		}
@@ -169,7 +180,7 @@
 					endZooming(e);
 				} else {
 					doZooming(e);
-				}
+				} // TODO allow panning if one touch left?
 			} else if (isPanning) {
 				pan(e);
 			}
@@ -231,7 +242,7 @@
 					// camera.zoom *=2;
 				}
 			}
-			camera.zoom = Math.min(Math.max(0.125, camera.zoom), 2);
+			// camera.zoom = Math.min(Math.max(0.25, camera.zoom), 2);
 
 			const screenPos = worldToScreen(x,y);
 			const delta = {
@@ -299,57 +310,73 @@
 				y: Math.floor((camera.y - visible.height/2) / gridSize) * gridSize
 			};
 
-			// console.log(JSON.stringify({gridLevel, gridSize, nextLevelGridSize}));
+			if (gridLevel < 5) {
+				// console.log(JSON.stringify({gridLevel, gridSize, nextLevelGridSize}));
 
-			// console.log(offset, camera);
-			// console.log({lineWidth,gridStart, gridOffset, gridSize, canvasWidth: canvas.width, canvasHeight: canvas.height, zoom: camera.zoom});
+				// console.log(offset, camera);
+				// console.log({lineWidth,gridStart, gridOffset, gridSize, canvasWidth: canvas.width, canvasHeight: canvas.height, zoom: camera.zoom});
 
-			for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
-				// ctx.fillStyle = vPattern;
-				// ctx.save();
-				// ctx.scale(1, gridSize / 48);
-				// ctx.fillRect(x-lineWidth/2, gridStart.y, lineWidth, visible.height + gridOffset);
-				// ctx.restore();
+				function setColor(x) {
+					if (Math.floor(x / (8 * 48)) == x / (8 * 48)) {
+						ctx.strokeStyle = "#4f5d94"; //"#6c7fc9";
+					} else if (Math.floor(x / (4 * 48)) == x / (4 * 48)) {
+						ctx.strokeStyle = "#3e4974"; //"#5665a1";
+					} else if (Math.floor(x / (2 * 48)) == x / (2 * 48)) {
+						ctx.strokeStyle = "#323b5e"; //"#434f7d";
+					} else if (Math.floor(x / (1 * 48)) == x / (1 * 48)){
+						ctx.strokeStyle = "#28304c"; //"#323b52";
+					}else {
+						ctx.strokeStyle = "#00000";
+					}
+				}
 
-				// // console.log('x', Math.round(x-lineWidth/2), Math.round(gridStart.y), Math.round(lineWidth), Math.round(gridSize))
-				// for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
-				// 	ctx.drawImage(vertPattern, Math.round(x-lineWidth/2), Math.round(y), Math.round(lineWidth), Math.round(gridSize));
-				// }
-				
-				ctx.beginPath();
-				ctx.strokeStyle = "#4F487A"; //gridLevel % 2 == 1 ? "#4F487A" : "#0F083A";
-				ctx.lineWidth = lineWidth;
-				// if ((x / nextLevelGridSize) == Math.floor(x / nextLevelGridSize)) {
-				// 	ctx.lineWidth = lineWidth * 2;
-				// } 
-				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
-				ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
-				ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
-				ctx.stroke();
-			}
+				for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
+					// ctx.fillStyle = vPattern;
+					// ctx.save();
+					// ctx.scale(1, gridSize / 48);
+					// ctx.fillRect(x-lineWidth/2, gridStart.y, lineWidth, visible.height + gridOffset);
+					// ctx.restore();
 
-			for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
-				// ctx.fillStyle = hPattern;
-				// ctx.save();
-				// ctx.scale(gridSize / 48, 1);
-				// ctx.fillRect(gridStart.x, y-lineWidth/2, visible.width + gridOffset, lineWidth);
-				// ctx.restore();
-				
-				// // console.log('y', Math.round(gridStart.x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth))
-				// for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
-				// 	ctx.drawImage(horizPattern, Math.round(x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth));
-				// }
-				
-				ctx.beginPath();
-				ctx.strokeStyle = "#4F487A"; //gridLevel % 2 == 1 ? "#4F487A" : "#0F083A";
-				ctx.lineWidth = lineWidth;
-				// if ((y / nextLevelGridSize) == Math.floor(y / nextLevelGridSize)) {
-				// 	ctx.lineWidth = lineWidth * 2;
-				// } 
-				ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
-				ctx.moveTo(Math.round(gridStart.x - gridOffset), Math.round(y));
-				ctx.lineTo(Math.round(gridStart.x + visible.width + gridOffset), Math.round(y));
-				ctx.stroke();
+					// // console.log('x', Math.round(x-lineWidth/2), Math.round(gridStart.y), Math.round(lineWidth), Math.round(gridSize))
+					// for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
+					// 	ctx.drawImage(vertPattern, Math.round(x-lineWidth/2), Math.round(y), Math.round(lineWidth), Math.round(gridSize));
+					// }
+					
+					ctx.beginPath();
+					setColor(x);
+					ctx.lineWidth = lineWidth;
+					// if ((x / nextLevelGridSize) == Math.floor(x / nextLevelGridSize)) {
+					// 	ctx.lineWidth = lineWidth * 2;
+					// } 
+					ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
+					ctx.moveTo(Math.round(x), Math.round(gridStart.y - gridOffset)); // TODO use drawImage for line pattern to avoid anti-aliasing
+					ctx.lineTo(Math.round(x), Math.round(gridStart.y + visible.height + gridOffset));
+					ctx.stroke();
+				}
+
+				for (let y = gridStart.y; y < gridStart.y + visible.height + gridOffset; y += gridSize) {
+					// ctx.fillStyle = hPattern;
+					// ctx.save();
+					// ctx.scale(gridSize / 48, 1);
+					// ctx.fillRect(gridStart.x, y-lineWidth/2, visible.width + gridOffset, lineWidth);
+					// ctx.restore();
+					
+					// // console.log('y', Math.round(gridStart.x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth))
+					// for (let x = gridStart.x; x < gridStart.x + visible.width + gridOffset; x += gridSize) {
+					// 	ctx.drawImage(horizPattern, Math.round(x), Math.round(y-lineWidth/2), Math.round(gridSize), Math.round(lineWidth));
+					// }
+					
+					ctx.beginPath();
+					setColor(y);
+					ctx.lineWidth = lineWidth;
+					// if ((y / nextLevelGridSize) == Math.floor(y / nextLevelGridSize)) {
+					// 	ctx.lineWidth = lineWidth * 2;
+					// } 
+					ctx.setLineDash([mainDash,smallDash,smallDash,smallDash]);
+					ctx.moveTo(Math.round(gridStart.x - gridOffset), Math.round(y));
+					ctx.lineTo(Math.round(gridStart.x + visible.width + gridOffset), Math.round(y));
+					ctx.stroke();
+				}
 			}
 
 			const gridX = Math.floor(gridStart.x / 48 / 4);
@@ -361,7 +388,9 @@
 					const planet = outerspace.getPlanetStats({x,y});
 					if (planet) {
 						const lavaFrame = planetsFrame.frames[planetTypesToFrame[planet.type]].frame;
-						ctx.drawImage(planetSpriteSheet, lavaFrame.x, lavaFrame.y, lavaFrame.w, lavaFrame.h, (x+planet.location.subX) * 48 * 4 - 48/2, (y+planet.location.subY) * 48 * 4 - 48/2, 48, 48);
+						// console.log(planet)
+						ctx.imageSmoothingEnabled = false;
+						ctx.drawImage(planetSpriteSheet, lavaFrame.x, lavaFrame.y, lavaFrame.w, lavaFrame.h, Math.round((x*4+planet.location.subX) * 48 - 48/2), Math.round((y*4+planet.location.subY) * 48 - 48/2), 48, 48);
 					}
 				}	
 			}
@@ -397,7 +426,7 @@
 	canvas {
 		width: 100%;
 		height: 100%;
-		background-color: #272e49;
+		background-color: #1f253a; /*#272e49;*/
 		image-rendering: -moz-crisp-edges;
 		image-rendering: -webkit-crisp-edges;
 		image-rendering: pixelated;

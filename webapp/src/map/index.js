@@ -34,27 +34,6 @@ const planetTypesToFrame = ["Baren.png", "Desert.png", "Forest.png", "Ice.png", 
 
 let drawOnChange = true;
 
-const lowZoomOrder = [
-  0.5,
-  1 / 3,
-  0.25,
-  1 / 5,
-  1 / 6,
-  1 / 7,
-  1 / 8,
-  1 / 9,
-  1 / 10,
-  1 / 11,
-  1 / 12,
-  1 / 13,
-  1 / 14,
-  1 / 15,
-  1 / 16
-]; //, 1/17, 1/18, 1/19, 1/20, 1/21, 1/22, 1/23, 1/24, 1/25, 1/26, 1/27, 1/28, 1/29]; // 48
-let canvas;
-let devicePixelRatio;
-let windowDevicePxelRatio;
-
 class Renderer {
   constructor() {}
 
@@ -225,32 +204,70 @@ class Renderer {
   }
 }
 
-class CameraControl {
-  constructor() {}
+const lowZoomOrder = [
+  0.5,
+  1 / 3,
+  0.25,
+  1 / 5,
+  1 / 6,
+  1 / 7,
+  1 / 8,
+  1 / 9,
+  1 / 10,
+  1 / 11,
+  1 / 12,
+  1 / 13,
+  1 / 14,
+  1 / 15,
+  1 / 16
+]; //, 1/17, 1/18, 1/19, 1/20, 1/21, 1/22, 1/23, 1/24, 1/25, 1/26, 1/27, 1/28, 1/29]; // 48
+class Camera {
+  constructor() {
+    this.zoomIndex = -1;
+    this.render = { // could be computed on the fly
+      x: 0,
+      y: 0,
+      scale: 1,
+      devicePixelRatio: 1
+    };
+    this.world = {
+      x: 0,
+      y: 0,
+      zoom: 1
+    };
+  }
 
-  setup(canvas, camera) {
+  _set(x, y, zoom) {
+    this.world.x = x;
+    this.world.y = y;
+    this.world.zoom = zoom;
+
+    const scale = this.world.zoom * this.render.devicePixelRatio;
+    this.render.scale = scale;
+    this.world.width = this.canvas.width / scale;
+    this.world.height = this.canvas.height / scale;
+
+    this.render.x = Math.floor(Math.floor((this.world.width / 2 - this.world.x) * scale) / scale);
+    this.render.y = Math.floor(Math.floor((this.world.height / 2 - this.world.y) * scale) / scale);
+  }
+
+  setup(canvas, onChange) {
+    const self = this;
     this.canvas = canvas;
-    this.camera = camera;
-  }
-}
-
-export default class Map {
-  constructor(renderer, cameraControl) {
-    this.renderer = renderer || new Renderer();
-    this.cameraControl = cameraControl || new CameraControl();
-  }
-  setup(canvas) {
-    let camera = { x: 0, y: 0, zoom: 1, zoomIndex: -1 };
-    this.cameraControl.setup(canvas, camera);
-    windowDevicePxelRatio = window.devicePixelRatio;
-    devicePixelRatio = 0.5; //window.devicePixelRatio;
-    console.log({ devicePixelRatio: window.devicePixelRatio });
-    let frame;
-    const ctx = canvas.getContext("2d");
-    this.renderer.setup(ctx);
+    // this.windowDevicePxelRatio = window.devicePixelRatio;
+    this.render.devicePixelRatio = 0.5; //window.devicePixelRatio;
 
     let isPanning = false;
     let lastClientPos = { x: 0, y: 0 };
+
+    const _set = (x,y,zoom) => {
+      this._set(x,y,zoom);
+      onChange();
+    };
+
+    const _update = () => {
+      _set(this.world.x, this.world.y, this.world.zoom);
+    };
 
     const startPanning = e => {
       console.log("startPanning");
@@ -291,13 +308,11 @@ export default class Map {
 
       console.log("panning", movementX, movementY);
 
-      const scale = camera.zoom * devicePixelRatio;
-      camera.x -= (movementX * devicePixelRatio) / scale;
-      camera.y -= (movementY * devicePixelRatio) / scale;
-
-      if (drawOnChange) {
-        draw();
-      }
+      const devicePixelRatio = this.render.devicePixelRatio;
+      const scale = this.world.zoom * devicePixelRatio;
+      this.world.x -= (movementX * devicePixelRatio) / scale;
+      this.world.y -= (movementY * devicePixelRatio) / scale;
+      _update();
     };
 
     function logEvent(name, func, options) {
@@ -349,9 +364,6 @@ export default class Map {
         const dir = Math.sign(diff);
         updateZoom(zoomPoint.x, zoomPoint.y, dir);
         lastDist = dist;
-        if (drawOnChange) {
-          draw();
-        }
       }
     }
 
@@ -395,9 +407,10 @@ export default class Map {
     };
 
     function screenToWorld(x, y) {
-      const scale = camera.zoom * devicePixelRatio;
-      x = (x * devicePixelRatio - canvas.width / 2) / scale + camera.x;
-      y = (y * devicePixelRatio - canvas.height / 2) / scale + camera.y;
+      const devicePixelRatio = self.render.devicePixelRatio;
+      const scale = self.world.zoom * devicePixelRatio;
+      x = (x * devicePixelRatio - canvas.width / 2) / scale + self.world.x;
+      y = (y * devicePixelRatio - canvas.height / 2) / scale + self.world.y;
       return {
         x,
         y
@@ -405,14 +418,16 @@ export default class Map {
     }
 
     function worldToScreen(x, y) {
-      const scale = camera.zoom * devicePixelRatio;
+      const devicePixelRatio = self.render.devicePixelRatio;
+      const scale = self.world.zoom * devicePixelRatio;
       return {
-        x: ((x - camera.x) * scale + canvas.width / 2) / devicePixelRatio,
-        y: ((y - camera.y) * scale + canvas.height / 2) / devicePixelRatio
+        x: ((x - self.world.x) * scale + self.canvas.width / 2) / devicePixelRatio,
+        y: ((y - self.world.y) * scale + self.canvas.height / 2) / devicePixelRatio
       };
     }
 
     function clientToCanvas(x, y) {
+      const devicePixelRatio = self.render.devicePixelRatio;
       x = x * devicePixelRatio;
       y = y * devicePixelRatio;
       return {
@@ -423,46 +438,43 @@ export default class Map {
 
     function updateZoom(offsetX, offsetY, dir) {
       const { x, y } = screenToWorld(offsetX, offsetY);
-      const oldZoom = camera.zoom;
+      const oldZoom = self.world.zoom;
 
       if (dir > 0) {
         // console.log('zoom out');
-        if (camera.zoom > 1) {
-          camera.zoom--;
+        if (self.world.zoom > 1) {
+          self.world.zoom--;
         } else {
-          camera.zoomIndex = Math.min(camera.zoomIndex + 1, lowZoomOrder.length - 1);
-          camera.zoom = lowZoomOrder[camera.zoomIndex];
-          // camera.zoom /=2;
+          self.zoomIndex = Math.min(self.zoomIndex + 1, lowZoomOrder.length - 1);
+          self.world.zoom = lowZoomOrder[self.zoomIndex];
+          // self.world.zoom /=2;
         }
       } else {
         // console.log('zoom in');
-        if (camera.zoom >= 1) {
-          camera.zoom++;
+        if (self.world.zoom >= 1) {
+          self.world.zoom++;
         } else {
-          camera.zoomIndex = camera.zoomIndex - 1;
-          if (camera.zoomIndex < 0) {
-            camera.zoomIndex = -1;
-            camera.zoom = 1;
+          self.zoomIndex = self.zoomIndex - 1;
+          if (self.zoomIndex < 0) {
+            self.zoomIndex = -1;
+            self.world.zoom = 1;
           } else {
-            camera.zoom = lowZoomOrder[camera.zoomIndex];
+            self.world.zoom = lowZoomOrder[self.zoomIndex];
           }
 
-          // camera.zoom *=2;
+          // self.world.zoom *=2;
         }
       }
-      // camera.zoom = Math.min(Math.max(0.25, camera.zoom), 2);
+      // self.world.zoom = Math.min(Math.max(0.25, self.world.zoom), 2);
 
       const screenPos = worldToScreen(x, y);
       const delta = {
-        x: Math.round((offsetX - screenPos.x) / camera.zoom),
-        y: Math.round((offsetY - screenPos.y) / camera.zoom)
+        x: Math.round((offsetX - screenPos.x) / self.world.zoom),
+        y: Math.round((offsetY - screenPos.y) / self.world.zoom)
       };
-      camera.x -= delta.x;
-      camera.y -= delta.y;
-
-      if (drawOnChange) {
-        draw();
-      }
+      self.world.x -= delta.x;
+      self.world.y -= delta.y;
+      _update();
     }
 
     canvas.onwheel = e => {
@@ -472,50 +484,56 @@ export default class Map {
 
       updateZoom(offsetX, offsetY, dir);
     };
+  }
 
-    function resize(canvas) {
-      var displayWidth = Math.floor(canvas.clientWidth * devicePixelRatio);
-      var displayHeight = Math.floor(canvas.clientHeight * devicePixelRatio);
+  onRender() {
+    const canvas = this.canvas;
+    const devicePixelRatio = this.render.devicePixelRatio;
+    var displayWidth = Math.floor(canvas.clientWidth * devicePixelRatio);
+    var displayHeight = Math.floor(canvas.clientHeight * devicePixelRatio);
 
-      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-        canvas.width = displayWidth;
-        canvas.height = displayHeight;
-        if (drawOnChange) {
-          draw();
-        }
-      }
+    if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
+      this._set(this.world.x, this.world.y, this.world.zoom);
+      return true;
     }
+  }
+}
+
+export default class Map {
+  constructor(renderer, camera) {
+    this.renderer = renderer || new Renderer();
+    this.camera = camera || new Camera();
+  }
+  setup(canvas) {
+    const self = this;
+    const ctx = canvas.getContext("2d");
+    this.renderer.setup(ctx);
 
     const draw = () => {
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const scale = camera.zoom * devicePixelRatio;
-
-      camera.width = canvas.width / scale;
-      camera.height = canvas.height / scale;
-
-      const offset = {
-        // floored so it remain pixel perfect
-        x: Math.floor(Math.floor((camera.width / 2 - camera.x) * scale) / scale),
-        y: Math.floor(Math.floor((camera.height / 2 - camera.y) * scale) / scale)
-      };
+      const scale = this.camera.render.scale;
       ctx.scale(scale, scale);
-      ctx.translate(offset.x, offset.y);
+      ctx.translate(this.camera.render.x, this.camera.render.y);
 
-      this.renderer.render(ctx, camera);
-
+      this.renderer.render(ctx, this.camera.world);
       ctx.restore();
     };
 
+    this.camera.setup(canvas, () => {
+      if (drawOnChange) draw();
+    });
+
+    let frame;
     (function loop() {
       frame = requestAnimationFrame(loop);
-      resize(canvas);
-      if (!drawOnChange) {
+      if (self.camera.onRender() || !drawOnChange) {
         draw();
       }
     })();
-
     return () => {
       cancelAnimationFrame(frame);
     };

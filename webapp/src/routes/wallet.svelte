@@ -5,7 +5,7 @@
 {JSON.stringify($wallet, null, '  ')}
 
 <br/>
-<button on:click="{() => wallet.probe()}">probe</button><br/>
+<button on:click="{() => wallet.probeBuiltin()}">probeBuiltin</button><br/>
 <button on:click="{() => wallet.connect('builtin')}">builtin</button><br/>
 <button on:click="{() => wallet.connect('portis')}">portis</button><br/>
 

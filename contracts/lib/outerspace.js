@@ -1,12 +1,13 @@
-const {utils, Wallet, BigNumber} = require("ethers");
+// const {utils, Wallet, BigNumber} = require("ethers");
 const {hexConcat, hexZeroPad} = require("@ethersproject/bytes");
-const {solidityKeccak256} = utils;
+const {keccak256} = require("@ethersproject/solidity");
+const {BigNumber} = require("@ethersproject/bignumber");
 
 function Random(seed) {
   this.seed = seed;
 }
 Random.prototype.r_u8 = function (r, i, mod) {
-  return BigNumber.from(solidityKeccak256(["uint256", "bytes32", "uint8"], [r, this.seed, i]))
+  return BigNumber.from(keccak256(["uint256", "bytes32", "uint8"], [r, this.seed, i]))
     .mod(mod)
     .toNumber();
 };
@@ -65,7 +66,7 @@ OuterSpace.prototype.getPlanetStats = function ({x, y}) {
   const attack = 4000 + _genesis.r_normal(location, 6) * 400;
   const defense = 4000 + _genesis.r_normal(location, 7) * 400;
   const speed = 5010 + _genesis.r_normal(location, 8) * 334;
-  const natives = 2000 + _genesis.r_normal(location, 8) * 100;
+  const natives = 2000 + _genesis.r_normal(location, 9) * 100;
 
   const type = _genesis.r_u8(location, 255, 7);
 

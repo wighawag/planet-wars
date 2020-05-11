@@ -1,7 +1,8 @@
 const {expectRevert, increaseTime, getTime, waitFor, objMap} = require("local-utils");
 const {ethers, getNamedAccounts, deployments} = require("@nomiclabs/buidler");
-const {utils, Wallet, BigNumber} = require("ethers");
-const {solidityKeccak256} = utils;
+const {BigNumber} = require("@ethersproject/bignumber");
+const {Wallet} = require("@ethersproject/wallet");
+const {keccak256} = require("@ethersproject/solidity");
 const {OuterSpace} = require("../../lib/outerspace");
 
 async function createPlayerAsContracts(player, contractNames) {
@@ -39,7 +40,7 @@ async function setupOuterSpace() {
 
 async function sendInSecret(player, {from, quantity, to}) {
   const secret = Wallet.createRandom().privateKey;
-  const toHash = solidityKeccak256(["bytes32", "uint256"], [secret, to.location.id]);
+  const toHash = keccak256(["bytes32", "uint256"], [secret, to.location.id]);
   const receipt = await waitFor(player.OuterSpace.send(from.location.id, quantity, toHash));
   let event;
   for (const eventEmitted of receipt.events) {

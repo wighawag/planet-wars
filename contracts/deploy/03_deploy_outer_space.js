@@ -1,4 +1,4 @@
-const {Wallet} = require("ethers");
+// const {Wallet} = require("@ethersproject/wallet");
 module.exports = async ({getNamedAccounts, deployments}) => {
   const {deployer} = await getNamedAccounts();
   const {deployIfDifferent, log} = deployments;

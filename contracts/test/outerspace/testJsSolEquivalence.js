@@ -8,8 +8,8 @@ describe("JS <-> Solidity equivalence", function () {
     const {location, stats} = outerSpace.findNextPlanet();
     const planet = await players[0].OuterSpace.callStatic.getPlanet(location.id);
     const statsFromContract = objMap(planet.stats, convertPlanetCallData);
-    // console.log({stats});
-    // console.log({statsFromContract});
+    console.log({stats});
+    console.log({statsFromContract});
     expect(statsFromContract).to.eql(stats);
   });
 });

@@ -262,7 +262,7 @@ contract OuterSpace is StakingWithInterest {
             attack: 4000 + _genesis.r_normal(location, 6) * 400, // 1/10,000
             defense: 4000 + _genesis.r_normal(location, 7) * 400, // 1/10,000
             speed: 5010 + _genesis.r_normal(location, 8) * 334, // 1/10,000
-            natives: 2000 + _genesis.r_normal(location, 8) * 100
+            natives: 2000 + _genesis.r_normal(location, 9) * 100
             // maxCapacity ?
         });
 

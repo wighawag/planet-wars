@@ -1,7 +1,7 @@
 const {assert, should, expect} = require("local-chai");
 const {expectRevert, waitFor, objMap} = require("local-utils");
 const {sendInSecret, setupOuterSpace, fetchPlanetState} = require("./utils");
-const {BigNumber} = require("ethers");
+const {BigNumber} = require("@ethersproject/bignumber");
 
 const stableTokenUnit = BigNumber.from("1000000000000000000");
 describe("OuterSpace", function () {

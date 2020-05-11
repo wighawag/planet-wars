@@ -1,5 +1,7 @@
 require("dotenv").config();
 const fs = require("fs");
+const {Wallet, utils} = require("ethers");
+const {parseEther} = utils;
 usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 
@@ -10,17 +12,26 @@ if (!mnemonic || mnemonic === "") {
     mnemonic = fs.readFileSync(mnemonicPath).toString();
   }
 }
-let mainnetMnemonic;
-if (mnemonic) {
-  mainnetMnemonic = mnemonic;
-} else {
+
+let mainnetMnemonic = process.env.MNEMONIC_MAINNET;
+// MNEMONIC_PATH_MAINNET ?
+
+if (!mnemonic || mnemonic === "") {
   try {
     mnemonic = fs.readFileSync(".mnemonic").toString();
   } catch (e) {}
+}
+
+if (!mainnetMnemonic || mainnetMnemonic === "") {
   try {
     mainnetMnemonic = fs.readFileSync(".mnemonic_mainnet").toString();
   } catch (e) {}
 }
+
+if (!mainnetMnemonic || mainnetMnemonic === "") {
+  mainnetMnemonic = mnemonic;
+}
+
 const accounts = mnemonic
   ? {
       mnemonic,
@@ -31,6 +42,15 @@ const mainnetAccounts = mainnetMnemonic
       mnemonic: mainnetMnemonic,
     }
   : undefined;
+
+const defaultBalance = parseEther("10000").toHexString();
+const buidlerevmAccounts = [];
+for (let i = 0; i < 10; i++) {
+  buidlerevmAccounts.push({
+    privateKey: Wallet.fromMnemonic(mnemonic, "m/44'/60'/0'/0/" + i).privateKey,
+    balance: defaultBalance,
+  });
+}
 
 module.exports = {
   solc: {
@@ -44,6 +64,9 @@ module.exports = {
     sources: "src",
   },
   networks: {
+    buidlerevm: {
+      accounts: buidlerevmAccounts,
+    },
     localhost: {
       live: true,
     },

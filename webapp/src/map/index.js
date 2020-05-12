@@ -166,10 +166,10 @@ class Renderer {
       }
     }
 
-    const gridX = Math.floor(gridStart.x / 48 / 4);
-    const gridY = Math.floor(gridStart.y / 48 / 4);
-    const gridEndX = Math.floor((gridStart.x + camera.width + gridOffset) / 48 / 4);
-    const gridEndY = Math.floor((gridStart.y + camera.height + gridOffset) / 48 / 4);
+    const gridX = Math.floor(gridStart.x / 48 / 4 / 2);
+    const gridY = Math.floor(gridStart.y / 48 / 4 / 2);
+    const gridEndX = Math.floor((gridStart.x + camera.width + gridOffset) / 48 / 4 / 2);
+    const gridEndY = Math.floor((gridStart.y + camera.height + gridOffset) / 48 / 4 / 2);
     for (let x = gridX; x <= gridEndX + 1; x++) {
       for (let y = gridY; y <= gridEndY + 1; y++) {
         const planet = outerspace.getPlanetStats({ x, y });
@@ -183,8 +183,8 @@ class Renderer {
             lavaFrame.y,
             lavaFrame.w,
             lavaFrame.h,
-            Math.round((x * 4 + planet.location.subX) * 48 - 48 / 2),
-            Math.round((y * 4 + planet.location.subY) * 48 - 48 / 2),
+            Math.round((x * 4 * 2 + planet.location.subX * 2) * 48 - 48 / 2),
+            Math.round((y * 4 * 2 + planet.location.subY * 2) * 48 - 48 / 2),
             48,
             48
           );
@@ -224,7 +224,8 @@ const lowZoomOrder = [
 class Camera {
   constructor() {
     this.zoomIndex = -1;
-    this.render = { // could be computed on the fly
+    this.render = {
+      // could be computed on the fly
       x: 0,
       y: 0,
       scale: 1,
@@ -260,8 +261,8 @@ class Camera {
     let isPanning = false;
     let lastClientPos = { x: 0, y: 0 };
 
-    const _set = (x,y,zoom) => {
-      this._set(x,y,zoom);
+    const _set = (x, y, zoom) => {
+      this._set(x, y, zoom);
       onChange();
     };
 
@@ -274,19 +275,50 @@ class Camera {
       isPanning = true;
       let eventX = e.clientX || e.touches[0].clientX;
       let eventY = e.clientY || e.touches[0].clientY;
-      // console.log({eventX, eventY});
       lastClientPos = { x: eventX, y: eventY };
-      // console.log(JSON.stringify({
-      // 	world: screenToWorld(e.offsetX, e.offsetY),
-      // 	screen: worldToScreen(screenToWorld(e.offsetX, e.offsetY).x, screenToWorld(e.offsetX, e.offsetY).y),
-      // 	offfset: {x: e.offsetX, y: e.offsetY},
-      // 	camera
-      // }));
     };
 
-    const endPanning = _e => {
+    const onClick = (x, y) => {
+      const worldPos = screenToWorld(x, y);
+      const gridPos = {
+        x: Math.round(worldPos.x / 48 / 2),
+        y: Math.round(worldPos.y / 48 / 2)
+      };
+      const shifted = {
+        x: gridPos.x + 2,
+        y: gridPos.y + 2
+      };
+      if (shifted.x % 4 == 0 || shifted.y % 4 == 0) {
+        console.log("boundaries");
+        return;
+      }
+      const location = {
+        x: Math.floor(shifted.x / 4),
+        y: Math.floor(shifted.y / 4),
+        subX: (shifted.x % 4) - 2 * Math.sign(shifted.x),
+        subY: (shifted.y % 4) - 2 * Math.sign(shifted.y)
+      };
+      location.id = ""; // TODO
+      console.log("onClick", JSON.stringify({ worldPos, gridPos, location, shifted }, null, "  "));
+      const planet = outerspace.getPlanetStats(location);
+      if (planet && planet.location.subX == location.subX && planet.location.subY == location.subY) {
+        console.log(JSON.stringify(planet, null, "  "));
+      } else {
+        console.log("no planet");
+      }
+    };
+
+    const endPanning = e => {
       console.log("endPanning");
       isPanning = false;
+      let eventX = e.clientX || e.touches[0].clientX;
+      let eventY = e.clientY || e.touches[0].clientY;
+      const dist = Math.hypot(eventX - lastClientPos.x, eventY - lastClientPos.y);
+      if (dist < 22) {
+        // TODO : devicePixelRatio?
+        // TODO time too ?
+        onClick(lastClientPos.x, lastClientPos.y);
+      }
     };
 
     const pan = e => {

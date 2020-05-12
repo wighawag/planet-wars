@@ -251,7 +251,7 @@ contract OuterSpace is StakingWithInterest {
         // int120 gx = int120(gridLocation & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
         // int120 gy = int120(gridLocation >> 128);
 
-        bool hasPlanet = _genesis.r_u8(location, 1, 64) == 1;
+        bool hasPlanet = _genesis.r_u8(location, 1, 16) == 1;
         require(hasPlanet, "no planet in this location");
         
         return PlanetStats({

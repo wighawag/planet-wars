@@ -1,10 +1,10 @@
 pragma solidity 0.6.5;
 
 import "../Interfaces/ERC20.sol";
-import "../BaseWithStorage/ForwarderReceiverBase.sol";
+import "../MetaTransaction/ForwarderRegistry.sol";
+import "../MetaTransaction/MetaTxReceiverBase.sol";
 
-
-contract SimpleERC20TokenWithInitialBalance is ForwarderReceiverBase, ERC20 {
+contract SimpleERC20TokenWithInitialBalance is MetaTxReceiverBase, ERC20 {
     string public constant name = "Simple";
     string public constant symbol = "SIMPLE";
 
@@ -22,8 +22,8 @@ contract SimpleERC20TokenWithInitialBalance is ForwarderReceiverBase, ERC20 {
     
     constructor(
         uint256 supply,
-        address forwarder
-    ) public ForwarderReceiverBase(forwarder) {
+        ForwarderRegistry forwarderRegistry
+    ) public MetaTxReceiverBase(forwarderRegistry) {
         _totalSupply = supply;
     }
 
@@ -75,7 +75,7 @@ contract SimpleERC20TokenWithInitialBalance is ForwarderReceiverBase, ERC20 {
     /// @param amount the number of tokens transfered.
     /// @return success true if success.
     function transfer(address to, uint256 amount) public override returns (bool success) {
-        _transfer(_getTxSigner(), to, amount);
+        _transfer(_getMsgSender(), to, amount);
         return true;
     }
 
@@ -89,7 +89,7 @@ contract SimpleERC20TokenWithInitialBalance is ForwarderReceiverBase, ERC20 {
         address to,
         uint256 amount
     ) public override returns (bool success) {
-        address sender = _getTxSigner();
+        address sender = _getMsgSender();
         if (sender != from) {
             uint256 currentAllowance = _allowances[from][sender];
             if (currentAllowance != (2**256) - 1) {
@@ -124,7 +124,7 @@ contract SimpleERC20TokenWithInitialBalance is ForwarderReceiverBase, ERC20 {
     /// @param amount the number of tokens allowed.
     /// @return success true if success.
     function approve(address spender, uint256 amount) public override returns (bool success) {
-        _approveFor(_getTxSigner(), spender, amount);
+        _approveFor(_getMsgSender(), spender, amount);
         return true;
     }
 

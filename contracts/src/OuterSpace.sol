@@ -45,7 +45,7 @@ contract OuterSpace is StakingWithInterest {
 
 
     function stake(address forPlayer, uint256 location, uint256 stakeAmount) external payable {
-        address sender = _getSender();
+        address sender = _msgSender();
         require(stakeAmount >= 10**18, "minumum stake : 1");
         (Planet storage planet, PlanetStats memory stats) = _getPlanet(location);
         address owner = planet.owner;
@@ -101,7 +101,7 @@ contract OuterSpace is StakingWithInterest {
         uint256 distance,
         bytes32 secret
     ) external {
-        _resolveFleetFor(_getSender(), fleetId, to, distance, secret);
+        _resolveFleetFor(_msgSender(), fleetId, to, distance, secret);
     }
 
     function resolveFleetFor(
@@ -111,7 +111,7 @@ contract OuterSpace is StakingWithInterest {
         uint256 distance,
         bytes32 secret
     ) external {
-        address sender = _getSender();
+        address sender = _msgSender();
         if (sender != attacker) {
             require(_operators[attacker][sender], "NOT_AUTHORIZED");
         }
@@ -123,7 +123,7 @@ contract OuterSpace is StakingWithInterest {
         uint256 quantity,
         bytes32 toHash
     ) external {
-        _sendFor(_getSender(), from, quantity, toHash);
+        _sendFor(_msgSender(), from, quantity, toHash);
     }
 
     function sendFor(
@@ -132,11 +132,11 @@ contract OuterSpace is StakingWithInterest {
         uint256 quantity,
         bytes32 toHash
     ) external {
-        address sender = _getSender();
+        address sender = _msgSender();
         if (sender != owner) {
             require(_operators[owner][sender], "NOT_AUTHORIZED");
         }
-        _sendFor(_getSender(), from, quantity, toHash);
+        _sendFor(_msgSender(), from, quantity, toHash);
     }
 
     // ////////////// EIP721 /////////////////// // TODO ?
@@ -144,7 +144,7 @@ contract OuterSpace is StakingWithInterest {
     // function transfer() // TODO EIP-721 ?
 
     function setApprovalForAll(address operator, bool approved) external {
-        address sender = _getSender();
+        address sender = _msgSender();
         _operators[sender][operator] = approved;
         emit ApprovalForAll(sender, operator, approved);
     }
@@ -292,7 +292,7 @@ contract OuterSpace is StakingWithInterest {
         // return _planets[location];
     }
 
-    function _getSender() internal view returns (address) {
+    function _msgSender() internal view returns (address) {
         return msg.sender; // TODO metatx
     }
 
@@ -374,7 +374,7 @@ contract OuterSpace is StakingWithInterest {
 //     address target, // can be zero for getting reward no matter who is owning the planet.
 //     address hunter // can be zero for anybody
 // ) external {
-//     address sender = _getSender();
+//     address sender = _msgSender();
 //     // require(target != sender, "please do not target yourself"); // TODO add this check ?
 //     emit Bounty(sender, token, amountPerSpaceships * maxSpaceships, location, deadline, target, amountPerSpaceships, hunter);
 // }

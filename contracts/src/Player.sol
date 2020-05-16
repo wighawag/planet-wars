@@ -81,7 +81,7 @@ contract Player is PaymentDestination {
     }
 
     function withdraw(uint256 amount, address payable dest) external {
-        address payable account = _getMsgSender();
+        address payable account = _msgSender();
         require(_ethBalances[account] >= amount, "insufficient funds");
         _ethBalances[account] -= amount;
         dest.transfer(amount);
@@ -89,7 +89,7 @@ contract Player is PaymentDestination {
     }
 
     function withdrawToken(ERC20 token, uint256 amount, address payable dest) external {
-        address payable account = _getMsgSender();
+        address payable account = _msgSender();
         require(_tokenBalances[account][token] >= amount, "insufficient funds");
         _tokenBalances[account][token] -= amount;
         token.transfer(dest, amount);
@@ -102,7 +102,7 @@ contract Player is PaymentDestination {
 
         require(destination != address(this), "cannot call itself");
         
-        address sender = _getMsgSender(); // signer of message
+        address sender = _msgSender(); // signer of message
         address playerAddressViaDelegate = _delegates[sender]; // is the signer a delegate ? if so forward the playerAddress instead
         if (playerAddressViaDelegate != address(0)) {
             sender = playerAddressViaDelegate;
@@ -123,7 +123,7 @@ contract Player is PaymentDestination {
         }
     }
 
-    function _getMsgSender() internal view returns(address payable signer) {
+    function _msgSender() internal view returns(address payable signer) {
         bytes memory data = msg.data;
         uint256 length = msg.data.length;
         assembly { signer := mload(sub(add(data, length), 0x00)) } // forwarder would have added that

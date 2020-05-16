@@ -1,10 +1,21 @@
 const {getNamedAccounts, ethers, deployments} = require("@nomiclabs/buidler");
+const {BigNumber} = require("ethers");
+const {OuterSpace} = require("../lib/outerspace");
+
+const waitFor = (p) => p.then((tx) => tx.wait());
 
 async function main() {
-  const {deployer, users} = await getNamedAccounts();
+  const {players} = await getNamedAccounts();
+
+  const OuterSpaceDeployment = await deployments.get("OuterSpace");
+  const outerSpace = new OuterSpace(OuterSpaceDeployment.linkedData);
+
+  let planet;
+  let stableTokenUnit = BigNumber.from("1000000000000000000");
   for (let i = 0; i < 4; i++) {
-    const outerSpaceContract = await ethers.getContract("OuterSpace", users[i]);
-    await outerSpaceContract.setName("" + Math.floor(Date.now() / 1000));
+    const outerSpaceContract = await ethers.getContract("OuterSpace", players[i]);
+    planet = outerSpace.findNextPlanet(planet ? planet.pointer : undefined);
+    await waitFor(outerSpaceContract.stake(players[i], planet.location.id, stableTokenUnit));
   }
 }
 

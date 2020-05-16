@@ -8,7 +8,7 @@ abstract contract MetaTxReceiverBase {
         _forwarderRegistry = forwarderRegistry;
     }
     
-    function  _getMsgSender() internal view returns (address payable signer) {
+    function  _msgSender() internal view returns (address payable signer) {
         bytes memory data = msg.data;
         uint256 length = msg.data.length;
         assembly { signer := mload(sub(add(data, length), 0x00)) }

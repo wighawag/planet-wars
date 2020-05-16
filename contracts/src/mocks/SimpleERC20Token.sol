@@ -75,7 +75,7 @@ contract SimpleERC20TokenWithInitialBalance is MetaTxReceiverBase, ERC20 {
     /// @param amount the number of tokens transfered.
     /// @return success true if success.
     function transfer(address to, uint256 amount) public override returns (bool success) {
-        _transfer(_getMsgSender(), to, amount);
+        _transfer(_msgSender(), to, amount);
         return true;
     }
 
@@ -89,7 +89,7 @@ contract SimpleERC20TokenWithInitialBalance is MetaTxReceiverBase, ERC20 {
         address to,
         uint256 amount
     ) public override returns (bool success) {
-        address sender = _getMsgSender();
+        address sender = _msgSender();
         if (sender != from) {
             uint256 currentAllowance = _allowances[from][sender];
             if (currentAllowance != (2**256) - 1) {
@@ -124,7 +124,7 @@ contract SimpleERC20TokenWithInitialBalance is MetaTxReceiverBase, ERC20 {
     /// @param amount the number of tokens allowed.
     /// @return success true if success.
     function approve(address spender, uint256 amount) public override returns (bool success) {
-        _approveFor(_getMsgSender(), spender, amount);
+        _approveFor(_msgSender(), spender, amount);
         return true;
     }
 
@@ -160,4 +160,27 @@ contract SimpleERC20TokenWithInitialBalance is MetaTxReceiverBase, ERC20 {
         _balances[to] = currentBalance + amount;
         emit Transfer(from, to, amount);
     }
+
+    // --- Approve by signature ---
+    // function permit(address holder, address spender, uint256 nonce, uint256 expiry, bool allowed, uint8 v, bytes32 r, bytes32 s) external {
+    //     bytes32 digest =
+    //         keccak256(abi.encodePacked(
+    //             "\x19\x01",
+    //             DOMAIN_SEPARATOR,
+    //             keccak256(abi.encode(PERMIT_TYPEHASH,
+    //                                  holder,
+    //                                  spender,
+    //                                  nonce,
+    //                                  expiry,
+    //                                  allowed))
+    //     ));
+
+    //     require(holder != address(0), "Dai/invalid-address-0");
+    //     require(holder == ecrecover(digest, v, r, s), "Dai/invalid-permit");
+    //     require(expiry == 0 || now <= expiry, "Dai/permit-expired");
+    //     require(nonce == nonces[holder]++, "Dai/invalid-nonce");
+    //     uint wad = allowed ? uint(-1) : 0;
+    //     _allowances[holder][spender] = wad;
+    //     emit Approval(holder, spender, wad);
+    // }
 }

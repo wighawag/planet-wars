@@ -1,47 +1,89 @@
 import { store, Address, Bytes, BigInt, BigDecimal } from '@graphprotocol/graph-ts';
-import {OuterSpaceContract, PlanetAcquired, FleetSent, FleetArrived, Attack} from '../generated/OuterSpace/OuterSpaceContract';
-import {NamedEntity} from '../generated/schema'
+import {OuterSpaceContract, PlanetStake, FleetSent, FleetArrived, Attack} from '../generated/OuterSpace/OuterSpaceContract';
+import {NamedEntity, AcquiredPlanet, AttackResult, Fleet, ReinforcementArrived} from '../generated/schema'
 import { log } from '@graphprotocol/graph-ts';
 
 let zeroAddress = '0x0000000000000000000000000000000000000000';
 
-export function handlePlanetAcquired(event: PlanetAcquired): void {
+export function handlePlanetStake(event: PlanetStake): void {
     let id = event.params.location.toHex();
-    let entity = NamedEntity.load(id);
+    let entity = AcquiredPlanet.load(id);
     if (!entity) {
-        entity = new NamedEntity(id);
+        entity = new AcquiredPlanet(id);
     }
-    entity.name = event.params.acquirer.toHex();
+    entity.lastOwnershipTime = event.block.timestamp; // reset clock
+    entity.owner = event.params.acquirer;
+    // entity.location = event.params.location;
+    entity.numSpaceships = event.params.numSpaceships;
+    entity.lastUpdated = event.block.timestamp;
+    entity.productionRate = event.params.productionRate;
+    entity.stake = event.params.newStake;
     entity.save();   
 }
 
 export function handleFleetSent(event: FleetSent): void {
-    let id = event.params.from.toHex();
-    let entity = NamedEntity.load(id);
+    let id = event.params.fleet.toString();
+    let entity = Fleet.load(id);
     if (!entity) {
-        entity = new NamedEntity(id);
+        entity = new Fleet(id);
     }
-    entity.name = event.params.sender.toHex();
+    entity.owner = event.params.sender;
+    entity.launchTime = event.block.timestamp;
+    entity.from = event.params.from;
+    entity.quantity = event.params.quantity;
     entity.save();   
 }
 
 export function handleFleetArrived(event: FleetArrived): void {
-    let id = event.params.location.toHex();
-    let entity = NamedEntity.load(id);
+    let id = event.params.fleet.toString();
+    let entity = ReinforcementArrived.load(id);
     if (!entity) {
-        entity = new NamedEntity(id);
+        entity = new ReinforcementArrived(id);
     }
-    entity.name = event.params.sender.toHex();
-    entity.save();   
+    let fleetEntity = Fleet.load(id);
+    entity.numSpaceships = fleetEntity.quantity;
+    entity.timestamp = event.block.timestamp;
+    entity.save();
+
+    let planetEntity = AcquiredPlanet.load(id);
+    if (!planetEntity) {
+        planetEntity = new AcquiredPlanet(id);
+        planetEntity.owner = fleetEntity.owner; // this should never happen, onwer can only be set in stake or attack
+        planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
+    }
+    planetEntity.numSpaceships = planetEntity.numSpaceships.plus(fleetEntity.quantity);
+    planetEntity.save();
+
+    store.remove('Fleet', id);
 }
 
 
 export function handleAttack(event: Attack): void {
-    let id = event.params.location.toHex();
-    let entity = NamedEntity.load(id);
+    let id = event.params.fleet.toString();
+    let entity = AttackResult.load(id);
     if (!entity) {
-        entity = new NamedEntity(id);
+        entity = new AttackResult(id);
     }
-    entity.name = event.params.sender.toHex();
-    entity.save();   
+    let fleetEntity = Fleet.load(id);
+    entity.attackerLoss = event.params.fleetLoss;
+    entity.defenderLoss = event.params.toLoss;
+    entity.capture = event.params.won;
+    entity.timestamp = event.block.timestamp;
+    entity.save();
+
+    let planetEntity = AcquiredPlanet.load(id);
+    if (!planetEntity) {
+        planetEntity = new AcquiredPlanet(id);
+        planetEntity.owner = fleetEntity.owner;
+        planetEntity.lastOwnershipTime = event.block.timestamp; // TODO in contract (reset on stake ?)
+    }
+    
+    if (event.params.won) {
+        planetEntity.numSpaceships = fleetEntity.quantity.minus(event.params.fleetLoss);
+    } else {
+        planetEntity.numSpaceships = planetEntity.numSpaceships.minus(event.params.toLoss);
+    }
+    planetEntity.save();   
+
+    store.remove('Fleet', id);   
 }

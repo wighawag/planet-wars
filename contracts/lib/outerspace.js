@@ -44,7 +44,7 @@ OuterSpace.prototype.getPlanetStats = function ({x, y}) {
 
   const location = hexConcat([yStr, xStr]);
 
-  const hasPlanet = _genesis.r_u8(location, 1, 8) == 1;
+  const hasPlanet = _genesis.r_u8(location, 1, 16) == 1;
   if (!hasPlanet) {
     this.cache[id] = null;
     return null;

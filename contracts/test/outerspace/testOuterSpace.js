@@ -8,14 +8,14 @@ describe("OuterSpace", function () {
   it("user can acquire virgin planet", async function () {
     const {players, outerSpace} = await setupOuterSpace();
     const {location} = outerSpace.findNextPlanet();
-    await waitFor(players[0].OuterSpace.stake(location.id, stableTokenUnit));
+    await waitFor(players[0].OuterSpace.stake(players[0].address, location.id, stableTokenUnit));
   });
 
   it("user cannot acquire planet already onwed by another player", async function () {
     const {players, outerSpace} = await setupOuterSpace();
     const {location} = outerSpace.findNextPlanet();
-    await waitFor(players[0].OuterSpace.stake(location.id, stableTokenUnit));
-    await expectRevert(players[1].OuterSpace.stake(location.id, stableTokenUnit));
+    await waitFor(players[0].OuterSpace.stake(players[0].address, location.id, stableTokenUnit));
+    await expectRevert(players[1].OuterSpace.stake(players[1].address, location.id, stableTokenUnit));
   });
 
   // TODO cannot exceed maxStake at first
@@ -25,8 +25,8 @@ describe("OuterSpace", function () {
     const {players, outerSpace, outerSpaceContract, increaseTime, getTime} = await setupOuterSpace();
     let planet0 = await fetchPlanetState(outerSpaceContract, outerSpace.findNextPlanet());
     let planet1 = await fetchPlanetState(outerSpaceContract, outerSpace.findNextPlanet(planet0.pointer));
-    await waitFor(players[0].OuterSpace.stake(planet0.location.id, stableTokenUnit));
-    await waitFor(players[1].OuterSpace.stake(planet1.location.id, stableTokenUnit));
+    await waitFor(players[0].OuterSpace.stake(players[0].address, planet0.location.id, stableTokenUnit));
+    await waitFor(players[1].OuterSpace.stake(players[1].address, planet1.location.id, stableTokenUnit));
     planet0 = await fetchPlanetState(outerSpaceContract, planet0);
     planet1 = await fetchPlanetState(outerSpaceContract, planet1);
 
@@ -42,7 +42,7 @@ describe("OuterSpace", function () {
   it("planet production maches estimate", async function () {
     const {players, outerSpace, outerSpaceContract, increaseTime, getTime} = await setupOuterSpace();
     let planet = await fetchPlanetState(outerSpaceContract, outerSpace.findNextPlanet());
-    await waitFor(players[0].OuterSpace.stake(planet.location.id, stableTokenUnit));
+    await waitFor(players[0].OuterSpace.stake(players[0].address, planet.location.id, stableTokenUnit));
     planet = await fetchPlanetState(outerSpaceContract, planet);
     await sendInSecret(players[0], {
       from: planet,

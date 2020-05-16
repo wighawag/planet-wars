@@ -2,6 +2,7 @@ pragma solidity 0.6.5;
 pragma experimental ABIEncoderV2;
 
 import "./StakingWithInterest.sol";
+import "./Interfaces/ERC20.sol";
 import "./Libraries/Random.sol";
 
 contract OuterSpace is StakingWithInterest {
@@ -35,44 +36,56 @@ contract OuterSpace is StakingWithInterest {
         uint256 quantity; // we know how many but not where
     }
 
-    event PlanetAcquired(address indexed acquirer, uint256 indexed location, uint256 stake);
+    event PlanetStake(address indexed acquirer, uint256 indexed location, uint256 newStake, uint256 numSpaceships, uint256 productionRate);
     event FleetSent(address indexed sender, uint256 indexed from, uint256 fleet, uint256 quantity);
     event FleetArrived(address indexed sender, uint256 indexed fleet, uint256 indexed location);
     event Attack(address indexed sender, uint256 indexed fleet, uint256 indexed location, uint256 fleetLoss, uint256 toLoss, bool won);
 
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
-    function stake(uint256 location, uint256 stakeAmount) external {
+
+    function stake(address forPlayer, uint256 location, uint256 stakeAmount) external payable {
         address sender = _getSender();
         require(stakeAmount >= 10**18, "minumum stake : 1");
         (Planet storage planet, PlanetStats memory stats) = _getPlanet(location);
         address owner = planet.owner;
 
-        if (planet.owner == address(0)) {
-            planet.owner = sender;
-            planet.lastOwnershipTime = block.timestamp;
+        if (msg.value > 0) {
+            // TODO  convert ether into _stakingToken (and refund extra)
+            revert("payment in ETH not implemented yet");
         } else {
-            require(sender == owner, "already owned by someone else");
+            // get from vault
+            // TODO _stakingToken.transferFrom(sender, address(this), stakeAmount);
         }
 
+        if (owner == address(0)) {
+            planet.owner = forPlayer;
+        } else {
+            require(forPlayer == owner, "already owned by someone else");
+        }
+        planet.lastOwnershipTime = block.timestamp; // reset on every new stake
+
         uint256 currentStake = planet.stake;
-        
+        uint256 currentNumSpaceShips;
         if (planet.lastUpdated == 0) {
             (uint256 attackerLoss,) = _computeFight(3600, stats.natives, 10000, 10000); // attacker alwasy win as stats.native is restricted to 3500
-            planet.numSpaceships = 3600 - attackerLoss;
+            currentNumSpaceShips = 3600 - attackerLoss;
         } else {
-            uint256 currentnumSpaceships = _getCurrentNumSpaceships(
+            currentNumSpaceShips = _getCurrentNumSpaceships(
                 planet.numSpaceships,
                 planet.lastUpdated,
                 planet.productionRate
             );
-            planet.numSpaceships = currentnumSpaceships;
         }
+        planet.numSpaceships = currentNumSpaceShips;
         require(currentStake + stakeAmount <= (stats.maxStake * 10**18), "exceeds max stake");
         uint256 newStake = currentStake + stakeAmount;
         planet.stake = newStake;
-        planet.productionRate = (stats.production * newStake) / (stats.maxStake * 10**18);
+        uint256 productionRate = (stats.production * newStake) / (stats.maxStake * 10**18);
+        planet.productionRate = productionRate;
         planet.lastUpdated = block.timestamp;
+
+        emit PlanetStake(forPlayer, location, newStake, currentNumSpaceShips, productionRate);
     }
 
     function withdraw(uint256 location) external {
@@ -156,7 +169,7 @@ contract OuterSpace is StakingWithInterest {
     uint256 _lastFleetId;
     bytes32 immutable _genesis;
 
-    constructor(address stakingToken, bytes32 genesis) public StakingWithInterest(stakingToken) {
+    constructor(ERC20 stakingToken, bytes32 genesis) public StakingWithInterest(stakingToken) {
         _genesis = genesis;
     }
 

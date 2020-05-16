@@ -51,10 +51,13 @@ contract OuterSpace is StakingWithInterest {
         address owner = planet.owner;
 
         if (msg.value > 0) {
-            // TODO  convert ether into _stakingToken (and refund extra)
-            revert("payment in ETH not implemented yet");
+            // TODO in playerVault ?
+            // uint256[] memory amounts = _uniswapV2Router01.swapExactETHForTokens{value:msg.value}(stakeAmount, [_weth, _stakingToken], _vault, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+            // if (amounts[1] > stakeAmount) {
+            //     _stakingToken.transfer(sender, amounts[1] - stakeAmount); // TODO send to Player Account (via PaymentGateway)
+            // }
         } else {
-            // get from vault
+            // get from Player account ?
             // TODO _stakingToken.transferFrom(sender, address(this), stakeAmount);
         }
 

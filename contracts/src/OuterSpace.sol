@@ -43,7 +43,7 @@ contract OuterSpace is StakingWithInterest {
 
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
-
+    // TODO stakeFromApproved()...
     function stake(address forPlayer, uint256 location, uint256 stakeAmount) external payable {
         address sender = _msgSender();
         require(stakeAmount >= 10**18, "minumum stake : 1");

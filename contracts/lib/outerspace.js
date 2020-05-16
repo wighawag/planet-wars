@@ -23,6 +23,26 @@ Random.prototype.r_normalFrom = function (r, i, selection) {
   ).toNumber();
 };
 
+function locationToXY(location) {
+  let X;
+  let y = 0;
+  const l = location.length;
+  if (l <= 34) {
+    x = BigNumber.from(location).fromTwos(128).toNumber();
+  } else {
+    x = BigNumber.from("0x" + location.slice(l - 32))
+      .fromTwos(128)
+      .toNumber();
+    y = BigNumber.from(location.slice(0, l - 32))
+      .fromTwos(128)
+      .toNumber();
+  }
+  return {
+    x,
+    y,
+  };
+}
+
 function toByteString(from, width) {
   return hexZeroPad(BigNumber.from(from).toTwos(width).toHexString(), Math.floor(width / 8));
 }
@@ -137,4 +157,5 @@ OuterSpace.prototype.findNextPlanet = function (pointer) {
 module.exports = {
   OuterSpace,
   Random,
+  locationToXY,
 };

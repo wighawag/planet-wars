@@ -1,5 +1,5 @@
 import { OuterSpace } from "../../../contracts/lib/outerspace";
-const outerspace = new OuterSpace("0x1111111111111111111111111111111111111111111111111111111111111111"); // TODO
+const outerspace = new OuterSpace("0xe0c3fa9ae97fc9b60baae605896b5e3e7cecb6baaaa4708162d1ec51e8d65a69"); // TODO
 
 const lowZoomOrder = [
   0.5,

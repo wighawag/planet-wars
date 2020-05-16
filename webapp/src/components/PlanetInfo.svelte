@@ -1,5 +1,8 @@
 <script>
 export let planet;
+import planets from "../stores/planets";
+
+$: planetAcquired = $planets.data[`${planet.location.x},${planet.location.y}`];
 </script>
 
 <style>
@@ -17,6 +20,9 @@ export let planet;
     {#each Object.keys(planet.stats) as key}
     <div><label>{key}:</label> <span class="value">{planet.stats[key]}</span></div>
     {/each}
+    {#if planetAcquired}
+    <div><label>owner:</label> <span class="value">{planetAcquired.owner}</span></div>
+    {/if}
   </div>
 
 </div>

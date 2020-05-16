@@ -47,22 +47,22 @@ export const client = createApolloClient();
 
 // QUERIES ////////////////////////////////////
 
-export const NAMES = gql`
+export const PLANETS = gql`
   query {
-    namedEntities(first: 5) {
+    acquiredPlanets {
       id
-      name
+      owner
     }
   }
 `;
 
 // SUBSCRIPTIONS //////////////////////////
 
-export const NAMES_SUBSCRIPTION = gql`
+export const PLANETS_SUBSCRIPTION = gql`
   subscription {
-    namedEntities(first: 5) {
+    acquiredPlanets {
       id
-      name
+      owner
     }
   }
 `;

@@ -5,7 +5,7 @@ const config = require("sapper/config/webpack.js");
 const pkg = require("./package.json");
 const dotEnv = require("dotenv-webpack");
 
-const env = process.env.NODE_ENV;
+const env = process.env.NODE_ENV || "production";
 const dev = env === "development";
 
 const environments = {

@@ -13,7 +13,8 @@ if (mode) {
   envPath = `./.env.${mode}`;
 }
 if (!fs.existsSync(envPath)) {
-  throw new Error(`${envPath} does not exists`);
+  envPath = undefined;
+  // throw new Error(`${envPath} does not exists`);
 }
 
 const alias = { svelte: path.resolve("node_modules", "svelte") };

@@ -19,7 +19,8 @@ const environments = {
     contracts: "./src/contracts/development.json"
   }
 };
-const contractsPath = process.env.CONTRACTS_PATH || environments[mode].contracts;
+console.log(`MODE ${mode}`);
+const contractsPath = process.env.CONTRACTS_PATH || (environments[mode] && environments[mode].contracts) || "";
 let contractsInfo = path.resolve(__dirname, contractsPath);
 if (!fs.existsSync(contractsInfo)) {
   console.error(`${mode} contracts info file doesn't exist: ${contractsInfo}`);

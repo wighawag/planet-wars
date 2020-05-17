@@ -1,6 +1,6 @@
 [build]
-  base = "webapp/"
-  publish = "webapp/__sapper__/export"
+  base = "webapp"
+  publish = "__sapper__/export"
   command = "yarn && yarn export"
 [build.environment]
   NODE_ENV = "staging" # TODO production

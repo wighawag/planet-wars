@@ -5,33 +5,38 @@ const config = require("sapper/config/webpack.js");
 const pkg = require("./package.json");
 const dotEnv = require("dotenv-webpack");
 
-const mode = process.env.NODE_ENV;
-const dev = mode === "development";
+const env = process.env.NODE_ENV;
+const dev = env === "development";
 
 const environments = {
   production: {
-    contracts: "./src/contracts/production.json"
+    contracts: "./src/contracts/production.json",
+    mode: "production"
   },
   staging: {
-    contracts: "./src/contracts/staging.json"
+    contracts: "./src/contracts/staging.json",
+    mode: "production"
   },
   development: {
-    contracts: "./src/contracts/development.json"
+    contracts: "./src/contracts/development.json",
+    mode: "development"
   }
 };
-console.log(`MODE ${mode}`);
-const contractsPath = process.env.CONTRACTS_PATH || (environments[mode] && environments[mode].contracts) || "";
+console.log(`ENV ${env}`);
+
+const envSettings = environments[env];
+const contractsPath = process.env.CONTRACTS_PATH || (envSettings && envSettings.contracts) || "";
 let contractsInfo = path.resolve(__dirname, contractsPath);
 if (!fs.existsSync(contractsInfo)) {
-  console.error(`${mode} contracts info file doesn't exist: ${contractsInfo}`);
+  console.error(`${env} contracts info file doesn't exist: ${contractsInfo}`);
   // process.exit();
 }
 console.log(`using ${contractsInfo} contracts`);
 
 let dotEnvPlugin;
 let envPath = ".env";
-if (mode) {
-  envPath = `./.env.${mode}`;
+if (env) {
+  envPath = `./.env.${env}`;
 }
 if (fs.existsSync(envPath)) {
   dotEnvPlugin = new dotEnv({
@@ -39,6 +44,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
+const mode = envSettings.mode;
 const alias = { svelte: path.resolve("node_modules", "svelte"), contractsInfo };
 const extensions = [".mjs", ".js", ".json", ".svelte", ".html"];
 const mainFields = ["svelte", "module", "browser", "main"];

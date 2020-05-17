@@ -47,7 +47,7 @@
     "webpack": "^4.7.0"
   },
   "scripts": {
-    "postinstall": "./.setup.js",
+    "postinstall": "node ./.setup.js",
     "dev": "sapper dev",
     "build": "sapper build",
     "export": "sapper export",

@@ -2,4 +2,8 @@
   base = "webapp/"
   publish = "webapp/__sapper__/export"
   command = "yarn && yarn export"
+# TODO use thegraph.com
+# [build.environment]
+#  THE_GRAPH_HTTP = "https://thegraph.com/subgraphs/name/planet-wars/planet-wars"
+#  THE_GRAPH_WS = "wss://thegraph.com/subgraphs/name/planet-wars/planet-wars"
 

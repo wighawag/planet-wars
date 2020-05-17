@@ -39,6 +39,8 @@
     "local:run": "cross-env BUIDLER_NETWORK=localhost node",
     "local:seed": "cross-env BUIDLER_NETWORK=localhost node scripts/seed.js",
     "rinkeby:deploy": "buidler deploy --network rinkeby",
+    "kovan:deploy": "buidler deploy --network kovan --export ../webapp/src/contracts/staging.json",
+    "goerli:deploy": "buidler deploy --network goerli",
     "mainnet:deploy": "buidler deploy --network mainnet"
   }
 }

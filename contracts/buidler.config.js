@@ -74,6 +74,14 @@ module.exports = {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_TOKEN,
       accounts,
     },
+    kovan: {
+      url: "https://kovan.infura.io/v3/" + process.env.INFURA_TOKEN,
+      accounts,
+    },
+    goerli: {
+      url: "https://goerli.infura.io/v3/" + process.env.INFURA_TOKEN,
+      accounts,
+    },
     mainnet: {
       url: "https://mainnet.infura.io/v3/" + process.env.INFURA_TOKEN,
       accounts: mainnetAccounts,

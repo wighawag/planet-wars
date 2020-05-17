@@ -1,0 +1,4 @@
+[build]
+  base = "webapp/"
+  publish = "webapp/__sapper__/export"
+  command = "yarn export"

@@ -28,6 +28,7 @@
     "solhint-plugin-prettier": "^0.0.4"
   },
   "scripts": {
+    "postinstall": "./.setup.js",
     "prettier:solidity": "prettier --write src/**/*.sol",
     "prettier:js": "prettier --write deploy test scripts",
     "prettier": "run-s prettier:*",

@@ -8,16 +8,37 @@ const dotEnv = require("dotenv-webpack");
 const mode = process.env.NODE_ENV;
 const dev = mode === "development";
 
+const environments = {
+  production: {
+    contracts: "./src/contracts/production.json"
+  },
+  staging: {
+    contracts: "./src/contracts/staging.json"
+  },
+  development: {
+    contracts: "./src/contracts/development.json"
+  }
+};
+const contractsPath = process.env.CONTRACTS_PATH || environments[mode].contracts;
+let contractsInfo = path.resolve(__dirname, contractsPath);
+if (!fs.existsSync(contractsInfo)) {
+  console.error(`${mode} contracts info file doesn't exist: ${contractsInfo}`);
+  // process.exit();
+}
+console.log(`using ${contractsInfo} contracts`);
+
+let dotEnvPlugin;
 let envPath = ".env";
 if (mode) {
   envPath = `./.env.${mode}`;
 }
-if (!fs.existsSync(envPath)) {
-  envPath = undefined;
-  // throw new Error(`${envPath} does not exists`);
+if (fs.existsSync(envPath)) {
+  dotEnvPlugin = new dotEnv({
+    path: envPath
+  });
 }
 
-const alias = { svelte: path.resolve("node_modules", "svelte") };
+const alias = { svelte: path.resolve("node_modules", "svelte"), contractsInfo };
 const extensions = [".mjs", ".js", ".json", ".svelte", ".html"];
 const mainFields = ["svelte", "module", "browser", "main"];
 
@@ -55,9 +76,7 @@ module.exports = {
     },
     mode,
     plugins: [
-      new dotEnv({
-        path: envPath
-      }),
+      dotEnvPlugin,
       // pending https://github.com/sveltejs/svelte/issues/2377
       // dev && new webpack.HotModuleReplacementPlugin(),
       new webpack.DefinePlugin({
@@ -96,11 +115,7 @@ module.exports = {
       ]
     },
     mode: process.env.NODE_ENV,
-    plugins: [
-      new dotEnv({
-        path: envPath
-      })
-    ],
+    plugins: [dotEnvPlugin].filter(Boolean),
     performance: {
       hints: false // it doesn't matter if server.js is large
     }

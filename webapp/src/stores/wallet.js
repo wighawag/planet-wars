@@ -1,5 +1,5 @@
 import WalletStore from "../node_modules/web3w/src";
-import contractsInfo from "../dev_contractsInfo.json";
+import contractsInfo from "contractsInfo";
 
 const { wallet, transactions } = WalletStore({
   log: console,
@@ -10,7 +10,7 @@ const { wallet, transactions } = WalletStore({
 
 // TODO remove
 if (typeof window !== "undefined") {
-  console.log('adding to global');
+  console.log("adding to global");
   window.wallet = wallet;
   window.transactions = transactions;
 }

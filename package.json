@@ -11,14 +11,14 @@
     "wighawag_newsh": "^0.0.5"
   },
   "scripts": {
-    "postinstall": "yarn --cwd contracts && yarn --cwd subgraph && yarn --cwd webapp && ./.setup.js",
+    "postinstall": "yarn --cwd contracts && yarn --cwd subgraph && yarn --cwd webapp",
     "externals-down": "docker-compose down -v",
     "externals-conf": "dotenv -e ./contracts/.env docker-compose config",
     "externals": "dotenv -e ./contracts/.env docker-compose up",
     "shell:externals": "newsh \"npm run externals\"",
     "subgraph:setup": "npm --prefix subgraph run local:setup",
     "subgraph:deploy": "npm --prefix subgraph run local:deploy ../contracts/deployments/localhost_0x539",
-    "contracts:deploy": "npm --prefix contracts run local:deploy -- --export ../webapp/src/dev_contractsInfo.json",
+    "contracts:deploy": "npm --prefix contracts run local:deploy -- --export ../webapp/src/contracts/development.json",
     "shell:contracts:deploy": "newsh \"npm run contracts:deploy\"",
     "contracts:seed": "npm --prefix contracts run seed",
     "webapp": "npm --prefix webapp run dev",

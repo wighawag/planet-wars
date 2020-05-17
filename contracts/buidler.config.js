@@ -22,6 +22,10 @@ if (!mnemonic || mnemonic === "") {
   } catch (e) {}
 }
 
+if (!mnemonic) {
+  mnemonic = Wallet.createRandom().mnemonic.phrase;
+}
+
 if (!mainnetMnemonic || mainnetMnemonic === "") {
   try {
     mainnetMnemonic = fs.readFileSync(".mnemonic_mainnet").toString();

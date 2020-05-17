@@ -5,7 +5,7 @@ const config = require("sapper/config/webpack.js");
 const pkg = require("./package.json");
 const dotEnv = require("dotenv-webpack");
 
-const env = process.env.NODE_ENV || "production";
+const env = (process.env.ENV || process.env.NODE_ENV || "production").trim();
 const dev = env === "development";
 
 const environments = {
@@ -37,6 +37,9 @@ let dotEnvPlugin;
 let envPath = ".env";
 if (env) {
   envPath = `./.env.${env}`;
+  if (!fs.existsSync(envPath)) {
+    envPath = ".env";
+  }
 }
 if (fs.existsSync(envPath)) {
   dotEnvPlugin = new dotEnv({
@@ -45,7 +48,10 @@ if (fs.existsSync(envPath)) {
 }
 
 const mode = envSettings.mode;
-const alias = { svelte: path.resolve("node_modules", "svelte"), contractsInfo };
+const alias = {
+  svelte: path.resolve("node_modules", "svelte"),
+  contractsInfo
+};
 const extensions = [".mjs", ".js", ".json", ".svelte", ".html"];
 const mainFields = ["svelte", "module", "browser", "main"];
 

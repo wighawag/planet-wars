@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import { client, PLANETS, PLANETS_SUBSCRIPTION } from "../graphql";
 import { BigNumber } from "@ethersproject/bignumber";
-import { locationToXY} from "../../../contracts/lib/outerspace";
+import { locationToXY} from "outerspace";
 
 function wait(t, v) {
   return new Promise(function(resolve) {

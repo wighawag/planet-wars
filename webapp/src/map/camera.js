@@ -1,4 +1,4 @@
-import { OuterSpace, xyToLocation } from "../../../contracts/lib/outerspace";
+import { OuterSpace, xyToLocation } from "outerspace";
 const outerspace = new OuterSpace("0xe0c3fa9ae97fc9b60baae605896b5e3e7cecb6baaaa4708162d1ec51e8d65a69"); // TODO
 
 const lowZoomOrder = [

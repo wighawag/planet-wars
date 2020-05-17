@@ -1,4 +1,4 @@
-import { OuterSpace } from "../../../contracts/lib/outerspace";
+import { OuterSpace, xyToLocation } from "../../../contracts/lib/outerspace";
 const outerspace = new OuterSpace("0xe0c3fa9ae97fc9b60baae605896b5e3e7cecb6baaaa4708162d1ec51e8d65a69"); // TODO
 
 const lowZoomOrder = [
@@ -30,8 +30,8 @@ export class Camera {
       devicePixelRatio: 1
     };
     this.world = {
-      x: 0,
-      y: 0,
+      x: 0, //-4000000000 / 48 / 4 / 2,
+      y: 0, //-4000000000 / 48 / 4 / 2,
       zoom: 1
     };
   }
@@ -97,7 +97,7 @@ export class Camera {
         subX: (shifted.x % 4) - 2 * Math.sign(shifted.x),
         subY: (shifted.y % 4) - 2 * Math.sign(shifted.y)
       };
-      location.id = ""; // TODO
+      location.id = xyToLocation(location.x, location.y);
       console.log("onClick", JSON.stringify({ worldPos, gridPos, location, shifted }, null, "  "));
       const planet = outerspace.getPlanetStats(location);
       if (planet && planet.location.subX == location.subX && planet.location.subY == location.subY) {

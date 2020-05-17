@@ -46,6 +46,18 @@ function locationToXY(location) {
 function toByteString(from, width) {
   return hexZeroPad(BigNumber.from(from).toTwos(width).toHexString(), Math.floor(width / 8));
 }
+
+function xyToLocation(x, y) {
+  const xStr = toByteString(x, 128);
+  const yStr = toByteString(y, 128);
+
+  const location = hexConcat([yStr, xStr]);
+  // const check = locationToXY(location);
+  // if (check.x != x || check.y != y) {
+  //   throw new Error("conversion errro");
+  // }
+  return location;
+}
 function OuterSpace(genesisHash) {
   this.genesisHash = genesisHash;
   this.genesis = new Random(genesisHash);
@@ -59,10 +71,7 @@ OuterSpace.prototype.getPlanetStats = function ({x, y}) {
   }
   const _genesis = this.genesis;
 
-  const xStr = toByteString(x, 128);
-  const yStr = toByteString(y, 128);
-
-  const location = hexConcat([yStr, xStr]);
+  const location = xyToLocation(x, y);
 
   const hasPlanet = _genesis.r_u8(location, 1, 16) == 1;
   if (!hasPlanet) {
@@ -158,4 +167,5 @@ module.exports = {
   OuterSpace,
   Random,
   locationToXY,
+  xyToLocation,
 };

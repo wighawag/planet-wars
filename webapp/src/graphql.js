@@ -52,6 +52,11 @@ export const PLANETS = gql`
     acquiredPlanets {
       id
       owner
+      lastOwnershipTime
+      numSpaceships
+      lastUpdated
+      productionRate
+      stake
     }
   }
 `;
@@ -63,6 +68,11 @@ export const PLANETS_SUBSCRIPTION = gql`
     acquiredPlanets {
       id
       owner
+      lastOwnershipTime
+      numSpaceships
+      lastUpdated
+      productionRate
+      stake
     }
   }
 `;

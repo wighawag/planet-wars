@@ -9,10 +9,17 @@
   planets.boot(data); // this boot the store with the data from server and make it listen for updates
   //// ---------- SERVER SIDE RENDERRING ----------- ///
 
-  import Map from "../app/Map"
+  import Map from "../app/Map";
+  import userflow from "../stores/userflow";
+
+  import ClaimFlow from "../flows/ClaimFlow";
+  const flows = {ClaimFlow}
+
 </script>
 
 <Map/>
+
+<svelte:component this={flows[$userflow.flow]}/>
 
 <!-- 
 {#if !$names.status}

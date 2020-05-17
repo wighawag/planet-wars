@@ -14,7 +14,7 @@ const { subscribe, set } = writable($data);
 
 function _set(data) {
   // TODO remove:
-  console.log(data);
+  console.log("PLANETS", data);
   Object.assign($data, data);
   set($data);
 }

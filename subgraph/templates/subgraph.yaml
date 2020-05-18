@@ -5,7 +5,7 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: OuterSpace
-    network: mainnet
+    network: {{chainName}}
     source:
       address: '{{contracts.OuterSpace.address}}'
       abi: OuterSpaceContract

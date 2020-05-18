@@ -17,7 +17,7 @@
     "externals": "dotenv -e ./contracts/.env docker-compose up",
     "shell:externals": "newsh \"npm run externals\"",
     "subgraph:setup": "npm --prefix subgraph run local:setup",
-    "subgraph:deploy": "npm --prefix subgraph run local:deploy ../contracts/deployments/localhost_0x539",
+    "subgraph:deploy": "npm --prefix subgraph run local:deploy ../contracts/deployments/localhost_0x0539 mainnet",
     "contracts:deploy": "npm --prefix contracts run local:deploy -- --export ../webapp/src/contracts/development.json",
     "shell:contracts:deploy": "newsh \"npm run contracts:deploy\"",
     "contracts:seed": "npm --prefix contracts run seed",

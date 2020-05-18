@@ -4,6 +4,7 @@ const Handlebars = require("handlebars");
 
 const args = process.argv.slice(2);
 const pathArg = args[0];
+const chainName = args[1];
 
 if (!pathArg) {
   console.error(`please provide the path to contracts info, either a directory of deployemnt or a single export file`);
@@ -18,7 +19,8 @@ if (stat.isDirectory()) {
   contractsInfo = {
     contracts: {
 
-    }
+    },
+    chainName
   };
   const files = fs.readdirSync(pathArg, {withFileTypes: true});
   for (const file of files) {
